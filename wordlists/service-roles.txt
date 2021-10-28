@@ -40,3 +40,8 @@ aws-service-role/lightsail.amazonaws.com/AWSServiceRoleForLightsail
 aws-service-role/elasticbeanstalk.amazonaws.com/AWSServiceRoleForElasticBeanstalk
 aws-service-role/events.amazonaws.com/AWSServiceRoleForCloudWatchEvents
 aws-service-role/redshift.amazonaws.com/AWSServiceRoleForRedshift
+EC2ImageBuilderDistributionCrossAccountRole
+aws-service-role/elasticache.amazonaws.com/AWSServiceRoleForElastiCache
+aws-service-role/email.cognito-idp.amazonaws.com/AmazonCognitoIdpEmailService
+aws-service-role/macie.amazonaws.com/AWSServiceRoleForAmazonMacie
+aws-service-role/wafv2.amazonaws.com/AWSServiceRoleForWAFV2Logging
