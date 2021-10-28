@@ -8,6 +8,7 @@ import threading
 import queue
 import datetime
 import settings
+from os.path import exists
 
 # Function to get a wordlist and ask how many threads, then split the wordlist into sub-wordlists of the appropriate size to generate the number of threads desired (approx) when passed to the threader function
 def getter(wordlist):
@@ -16,6 +17,10 @@ def getter(wordlist):
     with open(wordlist) as file:
         my_list = [x.rstrip() for x in file]
     list_size = int(len(my_list)/int(threads))
+    if list_size >= 1:
+        list_size
+    else:
+        list_size = 1
     low_speed = (int(len(my_list))/700)/60
     high_speed = (int(len(my_list))/1100)/60
     print('')
@@ -85,4 +90,7 @@ def threader(words):
     print('# of Identified Valid Principals: '+str(len(flat_list)))
     print('# of Minutes Elapsed: '+str(int(ts2-ts1)/60))
     print("# of Threads Utilized: "+str(len(threads)))
-    os.remove('words.txt')
+    if exists('words.txt'):
+        os.remove('words.txt')
+    else:
+        pass

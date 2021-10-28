@@ -36,7 +36,7 @@ After further testing, I finally settled on a combination of SNS and ECR-Public 
 
 To attempt every possible Account ID in AWS (1,000,000,000,000) would require an infeasible amount of time given only one account. Even assuming absolute efficiency*, over the course of a day an attacker will only be able to make 95,040,000 validation checks. Over 30 days, this is 2,851,200,000 validation checks and we are still over 28 years away from enumerating every valid AWS Account ID. Fortunately, there is nothing stopping us from registering many AWS accounts and automating this scan. While there is an initial limit of 20 accounts per AWS organization, I was able to get this limit increased for my Organization via console self-service and approval from an AWS representative. The approval occured without any further questions and now I'm off to automating this writ large. Again, assuming absolute efficiency, the 28 years of scanning could potentially be reduced down to ~100 days.
 
-*~1100 API calls/check per second in perpetuity per account and never repeating a guessed Account ID
+*~1100 API calls/check per second in perpetuity per account and never repeating a guessed Account ID.
 
 ## Potential Supported Services
 
