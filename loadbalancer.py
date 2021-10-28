@@ -15,7 +15,7 @@ def getter(wordlist):
     print('')
     print('Approximately how many threads do you think you want to run?')
     print('')
-    print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700')
+    print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.')
     print('')
     threads = input('# of threads: ')
     with open(wordlist) as file:
@@ -28,7 +28,7 @@ def getter(wordlist):
     low_speed = (int(len(my_list))/700)/60
     high_speed = (int(len(my_list))/1100)/60
     print('')
-    print("Estimated Scan Length: "+str(high_speed)+" minutes to "+str(low_speed)+" minutes")
+    print("Estimated Scan Duration: "+str(int(high_speed))+" minutes to "+str(int(low_speed))+" minutes")
     chunks = [my_list [x:x+list_size] for x in range (0, len(my_list), list_size)]
     new_list = []
     for list in chunks:
@@ -37,7 +37,7 @@ def getter(wordlist):
     print('Scanning Started with Quiet Riot')
     return new_list
 
-# Function to server as a crude load balancer for the service we know can withstand a significant load.
+# Function to server as a crude load balancer for the services we know can withstand a significant load.
 def balancedchecker(*wordlist):
     #create empty list of valid principals identified by scanning
     valid_list = []
@@ -95,7 +95,7 @@ def threader(words):
     print('# of Minutes Elapsed: '+str(int(ts2-ts1)/60))
     print("# of Threads Utilized: "+str(len(threads)))
     print('')
-    print('Scan results can be found in the results sub-directory, if any valid_principals were identified.')
+    print('Scan results can be found in the results sub-directory, if any valid_scan_results were identified.')
     if exists('words.txt'):
         os.remove('words.txt')
     else:

@@ -53,7 +53,7 @@ ecrpublic = boto3.client('ecr-public', config = config)
 
 #Requests user to provide required info to kick off scan
 def words_type():
-    wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, roles, users, or root account? '+"\033[0m").lower()
+    wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, users, or roles? '+"\033[0m").lower()
     print('')
     while True:
         if wordlist_type == 'accounts':
@@ -75,7 +75,7 @@ def words_type():
         else:
             print('You did not enter a valid wordlist type.')
             print('')
-            wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, roles, users, or root account? '+"\033[0m").lower()
+            wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, users, or roles? '+"\033[0m").lower()
 
 #Creates final wordlist based on type of scanning to be performed.
 def words():
@@ -153,14 +153,15 @@ settings.scan_objects.append(ecr_public_repo)
 settings.scan_objects.append(ecr_private_repo) 
 settings.scan_objects.append("arn:aws:sns:us-east-1:"+settings.account_no+":"+sns_topic)
 
-words() # TODO: words(scan_objects) - where words takes scan_objects and passes it as a second parameter to getter() - getter() then takes 
+# Call initial workflow that takes a user wordlist and starts a scan.
+words()
 
 #Request whether user is finished with infrastructure
 
 while True:
     print('')
     time.sleep(1)
-    prompt1=input('Finished Scanning? Answer "yes" to delete your infrastructure: ').lower()
+    prompt1= 'yes'# TODO: figure out why it can't take "no" - the threads never finish a second time through...think I need to clear the threads... input('Finished Scanning? Answer "yes" to delete your infrastructure: ').lower()
     time.sleep(1)
     #If user is finished with infrastructure, delete the created infrastructure
     if prompt1 == 'yes':
