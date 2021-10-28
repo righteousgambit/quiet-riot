@@ -25,10 +25,12 @@ def getter(wordlist):
         list_size
     else:
         list_size = 1
+    # Calculate estimated completion time based on 700 attempts/sec the 1100 attempts/sec
     low_speed = (int(len(my_list))/700)/60
     high_speed = (int(len(my_list))/1100)/60
     print('')
     print("Estimated Scan Duration: "+str(int(high_speed))+" minutes to "+str(int(low_speed))+" minutes")
+    # Based on the number of desired threads and the overall # of words in the wordlist provided, chunk the wordlist into smaller wordlists and then make a list of lists that can be passed in threader to services
     chunks = [my_list [x:x+list_size] for x in range (0, len(my_list), list_size)]
     new_list = []
     for list in chunks:
@@ -43,20 +45,19 @@ def balancedchecker(*wordlist):
     valid_list = []
     # iterate over wordlist and allocate wordlist to enumeration service based on a random seed selected at time of function call
     rand_seed = rand.randint(0, 1000)
-    # TODO: Turn print statement into variable passed to the relevant princ_checker function for inclusion - eg: print(settings.scan_objects)
     for i in range(0, len(wordlist)):
-        if 0 <= rand_seed <= 499: #ECR-Public seem to have best capacity or comparable to best - can handle nearly 1100 request/sec @ 278 threads
+        if 0 <= rand_seed <= 499:
             if ecrpubenum.ecr_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
         elif 500 <= rand_seed <= 899:
-            if snsenum.sns_princ_checker(wordlist[i]) == 'Pass': #SNS can handle maybe 220 threads? Test this # next
+            if snsenum.sns_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
         elif 900 <= rand_seed <= 1000:
-            if ecrprivenum.ecr_princ_checker(wordlist[i]) == 'Pass': #ECR-Private is able to handle maybe 80 threads
+            if ecrprivenum.ecr_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
@@ -76,19 +77,24 @@ def threader(words):
     print('Identified Valid Principals:')
     ct1 = datetime.datetime.now()
     ts1 = ct1.timestamp()
+    # For each list in the list of lists - trigger the "load balanced" principal checker
     for list in words:
         x = threading.Thread(target=balancedchecker, args=(list))
         x.start()
         threads.append(x)
         #x.join()
+    # Take the returns for each thread (a list of valid results) and make a list from them.
     for i in threads:
         new_list.append(q.get(i))
+    # Flatten the new list
     flat_list = [item for sublist in new_list for item in sublist]
+    # Write the results to valid_scan_results.txt in the results/ folder
     with open ('results/valid_scan_results.txt', 'a+') as file:
         for i in flat_list:
             file.write(str(i)+'\n')
     ct2 = datetime.datetime.now()
     ts2 = ct2.timestamp()
+    # Provide basic stats on scan performance.
     print('')
     print('Scan Summary: ')
     print('# of Identified Valid Principals: '+str(len(flat_list)))
@@ -96,6 +102,7 @@ def threader(words):
     print("# of Threads Utilized: "+str(len(threads)))
     print('')
     print('Scan results can be found in the results sub-directory, if any valid_scan_results were identified.')
+    # If the id_generator was used to create words.txt, you'll want to clean that up, so we do.
     if exists('words.txt'):
         os.remove('words.txt')
     else:
