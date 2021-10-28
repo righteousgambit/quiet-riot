@@ -38,8 +38,6 @@ To attempt every possible Account ID in AWS (1,000,000,000,000) would require an
 
 *~1100 API calls/check per second in perpetuity per account and never repeating a guessed Account ID
 
-*Author's Note (10/28/2021): * While not quite ready for release - a wordlist can be fed to enumeration/loadbalancer.py after updating enumeration/snsenum.py and enumeration/ecrpubenum.py with resources you own and you should be able to return valid principals from your list @ valid_principals.txt in the local directory where you run the tool.
-
 ## Potential Supported Services
 
 | # | AWS Service | Description | API Limits | Resource Pricing | Enumeration Capability |
