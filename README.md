@@ -3,7 +3,7 @@
   
 _An enumeration tool for scalable, unauthenticated validation of AWS principals; including AWS Acccount IDs, root e-mail addresses, users, and roles._
 
-__Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston (Twitter: [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
+__Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 
 See the blog post [here]()
 
@@ -52,7 +52,7 @@ To attempt every possible Account ID in AWS (1,000,000,000,000) would require an
 | 28 | __EFS__ | Managed Serverless Elastic File System | Unknown | Unknown | No |
 
 ## Getting Started With Quiet Riot
-To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts. If you don't bring your own wordlists, feel free to use one from the wordlists/ directory and I further recommend [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames)
+To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts. If you don't bring your own wordlists, feel free to use one from the wordlists/ directory and I further recommend [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
 
 ### Prerequisites
 awscli
