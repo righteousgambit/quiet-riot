@@ -7,7 +7,7 @@ _An enumeration tool for scalable, unauthenticated validation of AWS principals;
 - [Background](#Background)
     - [Resource-Based IAM Policies](#Resource-Based-IAM-Policies) 
     - [Resource-Based Policy Validation](#Resource-Based-Policy-Validation)
-    - [Exploitation](#Exploitation) 
+    - [~~Exploitation~~ Featureploitation](#Exploitation) 
 - [Potential Supported Services](#Potential-Supported-Services)
 - [API Throttling, Costs, and Other Scalability Considerations](#API-Throttling-Costs-and-Other-Scalability-Considerations)
 - [Getting Started with Quiet Riot](#Getting-Started-with-Quiet-Riot)
