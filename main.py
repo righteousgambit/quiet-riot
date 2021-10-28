@@ -168,12 +168,10 @@ sns.create_topic(
 )
 
 # Create list from created resource names
-account_no = sts.get_caller_identity()['Account']
-
 settings.init()
 settings.scan_objects.append(ecr_public_repo) 
 settings.scan_objects.append(ecr_private_repo) 
-settings.scan_objects.append("arn:aws:sns:us-east-1:"+account_no+":"+sns_topic)
+settings.scan_objects.append("arn:aws:sns:us-east-1:"+settings.account_no+":"+sns_topic)
 
 words() # TODO: words(scan_objects) - where words takes scan_objects and passes it as a second parameter to getter() - getter() then takes 
 

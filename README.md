@@ -25,18 +25,23 @@ _An enumeration tool for scalable, unauthenticated validation of AWS principals;
 To determine the validity of a particular resource-based policy, the AWS IAM engine validates the form of a particular policy **and critically** _the included AWS principals_ at the time the policy is attached to the relevant resource. Many services that support such resource-based policies will throw an error for an invalid AWS principal in the policy. This means that a policy containing a single AWS principal can be used as a proxy to validate whether that principal exists or not.
 
 ### ~~Exploitation~~ "Featureploitation"
-Originally identified by Daniel Grzelak (Twitter: [@dagrz](https://twitter.com/dagrz)) and subsequently re-discovered a number of times, this technique can help attackers with a key capability - enumerating attack targets. While AWS considers this capability a "_feature_", I am curious to see what scale of ~~exploitation~~ featureploitation might change AWS perspective. To this end, I have developed an Offensive Security Tool (OST) to exploit this AWS feature for the maximum possible impact. 
+Originally identified by Daniel Grzelak (Twitter: [@dagrz](https://twitter.com/dagrz)) and subsequently re-discovered a number of times, this technique can help attackers with a key capability - enumerating attack targets (Account IDs) and the associated footprint (root account e-mail, roles, users). In particular, static vendor roles and AWS "service-linked" roles give strong insights into the services and platforms/applications that a particular AWS account has configured. While AWS considers this capability a "_feature_", I am curious to see what scale of ~~exploitation~~ featureploitation might change AWS perspective. To this end, I have developed an Offensive Security Tool (OST) to exploit this AWS feature for the maximum possible impact. 
   
-Even this idea is not new. Will Bengston (Twitter: [@__muscles](https://twitter.com/__muscles)) has [previously suggested this general technique](https://twitter.com/__muscles/status/1433255950358618117?s=20). Seeing as how I haven't found a tool that implements Will's suggestion...and I have very limited development experience, I decided to take the opportunity to hone my python chops.  
+Even this idea is not new. Will Bengston (Twitter: [@__muscles](https://twitter.com/__muscles)) has [previously suggested a similar technique](https://twitter.com/__muscles/status/1433255950358618117?s=20). Seeing as how I haven't found a tool that implements Will's suggestion and I have very limited development experience, I decided to take the opportunity to hone my python chops further.  
 
-### Featureploitation Update
-After doing extensive analysis of this method using the AWS Python (Boto3) SDK, I was able to determine that the fundamental bottleneck for scanning (at least for Python and Python-based (awscli) API calls) is I/O in a single-threaded Python application. After modifying the program to run multi-threaded, I finally started getting throttled by the APIs. You can see the results from running various test scans [here](./enumeration/scan-run-statistics.txt). 
+### Featureploitation Limits
+#### Throttling
+After performing extensive analysis of scaling methods using the AWS Python (Boto3) SDK, I was able to determine that the bottleneck for scanning (at least for Python and awscli -based tools) is I/O capacity of a single-threaded Python application. After modifying the program to run with multiple threads, I was able to trigger exceptions in individual threads due to throttling by the various AWS APIs. You can see the results from running a few benchmarking test scans [here](./results/scan-run-statistics.txt). APIs that I tested had wildly different throttling limits and notably, s3 bucket policy attempts took ~10x as long as similar attempts against other services.
 
-After further testing, I finally settled on a combination of SNS and ECR-Public running in US-East-1 in ~40%/60% split with ~600 threads on a 2020 Macbook Air with an M1 and 16 GB RAM. This configuration yields on average ~1100 calls/sec, though this can fluctuate significantly depending on a variety of factors. Under these configurations, I did occasionally throw an exception on a thread from throttling...but you can configure additional re-try attempts via botocore that would eliminate this issue with some performance trade-off.
+With further testing, I settled on a combination of SNS, ECR-Public, and ECR-Private services running in US-East-1 in ~40%/50%/10% configuration split with ~700 threads. The machine I used was a 2020 Macbook Air (M1 and 16 GB RAM). This configuration yielded on average ~1100 calls/sec, though the actual number of calls can fluctuate significantly depending on a variety of factors including network connectivity. Under these configurations, I did occasionally throw an exception on a thread from throttling...but I have subsequently configured additional (4 -> 7) re-try attempts via botocore that would eliminate this issue with some performance trade-off.
 
+#### Computational Difficulty
 To attempt every possible Account ID in AWS (1,000,000,000,000) would require an infeasible amount of time given only one account. Even assuming absolute efficiency*, over the course of a day an attacker will only be able to make 95,040,000 validation checks. Over 30 days, this is 2,851,200,000 validation checks and we are still over 28 years away from enumerating every valid AWS Account ID. Fortunately, there is nothing stopping us from registering many AWS accounts and automating this scan. While there is an initial limit of 20 accounts per AWS organization, I was able to get this limit increased for my Organization via console self-service and approval from an AWS representative. The approval occured without any further questions and now I'm off to automating this writ large. Again, assuming absolute efficiency, the 28 years of scanning could potentially be reduced down to ~100 days.
 
 *~1100 API calls/check per second in perpetuity per account and never repeating a guessed Account ID.
+
+#### Wordlists
+TODO: Web Scraping, ect.
 
 ## Potential Supported Services
 
@@ -70,27 +75,6 @@ To attempt every possible Account ID in AWS (1,000,000,000,000) would require an
 | 26 | __Serverless Application Repository__ | Managed Source Code Repository | Unknown | Unknown | No |
 | 27 | __SQS__ | Managed Serverless Queueing Service | Unknown | Unknown | No |
 | 28 | __EFS__ | Managed Serverless Elastic File System | Unknown | Unknown | No |
-
-## API Throttling, Costs, and Other Scalability Considerations
-  
-AWS services, resources, and service API endpoints have various considerations that impact the approach taken to maximize impact. For the following sub-sections, we'll look at two example services and how the approach and cost differ.
-
-### API Throttling
-Each service API endpoint has a standard quota level that is provisioned to end customers by default. The quota specifies how many API calls (requests) can be made per second.
-
-#### SNS
-
-#### Lambda
-
-### Costs
-Most AWS services have an associated cost. The services used to stand up Quiet Riot infrastructure for enumeration purposes will have varying degrees of cost associated with them.
-  
-#### SNS
-While [SNS](https://aws.amazon.com/sns/pricing/) does not have a cost associated directly with the creation of the "Topic" that we will be using to test AWS principals and the first 1 million API calls (i.e.) are free,  
-  
-#### Lambda
-
-
 
 ## Getting Started With Quiet Riot
 ### Prerequisites

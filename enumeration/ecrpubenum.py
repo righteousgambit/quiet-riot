@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 import uuid
 import datetime
 from botocore.config import Config
+import settings
 
 config = Config(
     retries = dict(
@@ -41,8 +42,8 @@ def ecr_princ_checker(rand_account_id):
 }
     try:
         response = client.set_repository_policy(
-            registryId='201012399609',
-            repositoryName='2346cb8232894e7182d7d9d945dc9b3f',
+            registryId=settings.account_no,
+            repositoryName=settings.scan_objects[0],
             policyText=json.dumps(my_managed_policy)
         )
         print(rand_account_id)
