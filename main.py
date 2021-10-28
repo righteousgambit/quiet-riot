@@ -42,12 +42,7 @@ ________        .__        __    __________.__        __
 """+nocolor)
 
 
-#Create clients required for Quiet Riot Application Infrastructure
-#s3 = boto3.client('s3')
-#client = boto3.client('lambda')
 
-# Set s3 resource client - allows operations against s3 buckets (data plane) rather than s3 service (control plane)
-#s3resource = boto3.resource(service_name = 's3')
 sts = boto3.client('sts')
 #Create clients required for Quiet Riot Enumeration Infrastructure
 sns = boto3.client('sns', config = config)
@@ -55,18 +50,6 @@ ecrprivate = boto3.client('ecr', config = config)
 ecrpublic = boto3.client('ecr-public', config = config)
 
 #global_bucket = 's3://quiet-riot-global-bucket/'
-
-#Create s3 bucket to use for Lambda trigger
-#bucket_name = 'quiet-riot-global-bucket' #f'quiet-riot-infra-bucket-{uuid.uuid4().hex}'
-# s3.create_bucket(ACL='bucket-owner-full-control',
-#     Bucket=bucket_name,
-#     )
-# Command to upload results file 
-# s3resource.meta.client.upload_file(Filename = 'words.txt', Bucket = bucket_name, Key = 'results/valid-principals.txt')
-
-
-
-
 
 #Requests user to provide required info to kick off scan
 def words_type():

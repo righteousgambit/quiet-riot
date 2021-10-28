@@ -94,6 +94,8 @@ def threader(words):
     print('# of Identified Valid Principals: '+str(len(flat_list)))
     print('# of Minutes Elapsed: '+str(int(ts2-ts1)/60))
     print("# of Threads Utilized: "+str(len(threads)))
+    print('')
+    print('Scan results can be found in the results sub-directory, if any valid_principals were identified.')
     if exists('words.txt'):
         os.remove('words.txt')
     else:
