@@ -3,34 +3,9 @@
   
 _An enumeration tool for scalable, unauthenticated validation of AWS principals; including AWS Acccount IDs, root e-mail addresses, users, and roles._
 
-**Table of Contents**
-- [Background](#Background)
-    - [Resource-Based IAM Policies](#Resource-Based-IAM-Policies) 
-    - [Resource-Based Policy Validation](#Resource-Based-Policy-Validation)
-    - [~~Exploitation~~ Featureploitation](#Exploitation) 
-- [Potential Supported Services](#Potential-Supported-Services)
-- [API Throttling, Costs, and Other Scalability Considerations](#API-Throttling-Costs-and-Other-Scalability-Considerations)
-- [Getting Started with Quiet Riot](#Getting-Started-with-Quiet-Riot)
-    - [Prerequisites](#Prerequisites)
-    - [Configuration Options](#Configuration-Options)
+__Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston (Twitter: [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 
-## Background
-
-### Resource-Based IAM Policies
-[AWS services that work with IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-services-that-work-with-iam.html) include a number of services that support [_"Resource-based policies"_](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_identity-vs-resource.html). These resource-based policies allow direct access to AWS service-level resources and are evaluated prior to Identity-based policies when determining whether a given user (unauthenticated user, any authenticated AWS principal, or specific AWS IAM principals) has access to the specified resource. 
-
-![AWS IAM Policy Evaluation Logic](./static/PolicyEvaluationHorizontal.png)
-  
-### Resource-Based Policy Validation
-To determine the validity of a particular resource-based policy, the AWS IAM engine validates the form of a particular policy **and critically** _the included AWS principals_ at the time the policy is attached to the relevant resource. Many services that support such resource-based policies will throw an error for an invalid AWS principal in the policy. This means that a policy containing a single AWS principal can be used as a proxy to validate whether that principal exists or not.
-
-### ~~Exploitation~~ "Featureploitation"
-Originally identified by Daniel Grzelak (Twitter: [@dagrz](https://twitter.com/dagrz)) and subsequently re-discovered a number of times, this technique can help attackers with a key capability - enumerating attack targets (Account IDs) and the associated footprint (root account e-mail, roles, users). In particular, static vendor roles and AWS "service-linked" roles give strong insights into the services and platforms/applications that a particular AWS account has configured. While AWS considers this capability a "_feature_", I am curious to see what scale of ~~exploitation~~ featureploitation might change AWS perspective. To this end, I have developed an Offensive Security Tool (OST) to exploit this AWS feature for the maximum possible impact. 
-
-Even this idea is not new. Will Bengston (Twitter: [@__muscles](https://twitter.com/__muscles)) has [previously suggested a similar technique](https://twitter.com/__muscles/status/1433255950358618117?s=20). Seeing as how I haven't found a tool that implements Will's suggestion and I have very limited development experience, I decided to take the opportunity to hone my python chops further.  
-
-#### Gathering Wordlists and a higher purpose
-TODO: Web Scraping, ect.
+See the blog post [here]()
 
 ### Featureploitation Limits
 #### Throttling
@@ -77,5 +52,11 @@ To attempt every possible Account ID in AWS (1,000,000,000,000) would require an
 | 28 | __EFS__ | Managed Serverless Elastic File System | Unknown | Unknown | No |
 
 ## Getting Started With Quiet Riot
+To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts.
+
 ### Prerequisites
-### Configuration Options
+awscli
+boto3
+botocore
+Sufficient AWS credentials configured via CLI
+
