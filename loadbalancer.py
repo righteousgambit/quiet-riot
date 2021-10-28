@@ -13,7 +13,11 @@ from os.path import exists
 # Function to get a wordlist and ask how many threads, then split the wordlist into sub-wordlists of the appropriate size to generate the number of threads desired (approx) when passed to the threader function
 def getter(wordlist):
     print('')
-    threads = input('How many threads do you want to run? ')
+    print('Approximately how many threads do you think you want to run?')
+    print('')
+    print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700')
+    print('')
+    threads = input('# of threads: ')
     with open(wordlist) as file:
         my_list = [x.rstrip() for x in file]
     list_size = int(len(my_list)/int(threads))
@@ -80,7 +84,7 @@ def threader(words):
     for i in threads:
         new_list.append(q.get(i))
     flat_list = [item for sublist in new_list for item in sublist]
-    with open ('results/Valid_Account_IDs.txt', 'a+') as file:
+    with open ('results/valid_scan_results.txt', 'a+') as file:
         for i in flat_list:
             file.write(str(i)+'\n')
     ct2 = datetime.datetime.now()

@@ -112,7 +112,6 @@ def words():
                         for item in new_list:
                             f.write("%s\n" % item)
                     # Configure user-defined wordlist as roles for triggering via enumeration.loadbalancer.threader(getter())
-                    print('Wordlist configured successfully. Scanning to commence.')
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
                     break
                 elif wordlist_type == 'users':
@@ -122,7 +121,6 @@ def words():
                         for item in new_list:
                             f.write("%s\n" % item)
                     # Configure user-defined wordlist as users for triggering via enumeration.loadbalancer.threader(getter())
-                    print('Wordlist configured successfully. Scanning to commence.')
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
                     break
                 elif wordlist_type == 'accounts' or 'root account':
@@ -132,7 +130,6 @@ def words():
                         for item in new_list:
                             f.write("%s\n" % item)
                     # Configure user-defined wordlist as account IDs or root account e-mails for triggering via enumeration.loadbalancer.threader(getter())
-                    print('Wordlist configured successfully. Scanning to commence.')
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
                     break
                 else: 
