@@ -32,13 +32,4 @@ LambdaAdminAccess
 GrafanaCloudWatch
 OrganizationAccountAccessRole
 OrgMgmtRole
-john
-jacob
-jingleheimer
-schmidt
-his
-name
-was
-my
-name
-too
+service-role/codebuild-mirza-service-role
