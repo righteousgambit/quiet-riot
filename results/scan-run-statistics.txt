@@ -1,0 +1,301 @@
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+72 Seconds Elapsed
+1.2 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+42 Seconds Elapsed
+0.7 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+92 Seconds Elapsed
+1.5333333333333334 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+52 Seconds Elapsed
+0.8666666666666667 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+47 Seconds Elapsed
+0.7833333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+42 Seconds Elapsed
+0.7 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+73 Seconds Elapsed
+1.2166666666666666 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+55 Seconds Elapsed
+0.9166666666666666 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+68 Seconds Elapsed
+1.1333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: s3
+List Length: 5000 words
+# of Threads: 278
+88 Seconds Elapsed
+1.4666666666666666 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+7 Seconds Elapsed
+0.11666666666666667 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+8 Seconds Elapsed
+0.13333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+7 Seconds Elapsed
+0.11666666666666667 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+FIRST SCAN WITH ECR-Private FAILED w/ 278 threads. Backing down to 110.
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+7 Seconds Elapsed
+0.11666666666666667 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+4 Seconds Elapsed
+0.06666666666666667 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Private
+List Length: 5000 words
+# of Threads: 112
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+AFTER 9 successful runs - got throttled on Attempt 10 - moving on to SNS
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+7 Seconds Elapsed
+0.11666666666666667 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+10 Seconds Elapsed
+0.16666666666666666 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+5 Seconds Elapsed
+0.08333333333333333 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+9 Seconds Elapsed
+0.15 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+7 Seconds Elapsed
+0.11666666666666667 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+6 Seconds Elapsed
+0.1 Minutes
+
+Scan Summary: 
+Enumeration Service: SNS
+List Length: 5000 words
+# of Threads: 278
+7 Seconds Elapsed
+0.11666666666666667 Minutes
+
+#############################
+    Advanced Testing Runs
+#############################
+
+Scan Summary: 
+# of Valid Principals:28Enumeration Service: ECR-Public + SNS
+List Length: 500000 words
+# of Threads: 701
+409 Seconds Elapsed
+6.816666666666666 Minutes
+
+Scan Summary: 
+# of Valid Principals:24Enumeration Service: ECR-Public + SNS
+List Length: 500000 words
+# of Threads: 701
+426 Seconds Elapsed
+7.1 Minutes
+
+Scan Summary: 
+Enumeration Service: ECR-Public + SNS
+# of Threads: 0
+0 Seconds Elapsed
+0.0 Minutes
+
