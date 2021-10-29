@@ -7,7 +7,8 @@ import time
 import os
 from os import environ
 import glob
-import loadbalancer
+import enumeration.loadbalancer as loadbalancer
+import enumeration.rand_id_generator as rand_id_generator
 import enumeration.ecrprivenum
 import enumeration.ecrpubenum
 import enumeration.snsenum
@@ -84,7 +85,14 @@ def words():
     new_list = []
     while True:
         try:
-            wordlist_file=input('Provide path to wordlist file: ')
+            if wordlist_type == 'accounts':
+                response = rand_id_generator.rand_id_generator()
+            else:
+                pass
+            if wordlist_type == 'accounts':
+                wordlist_file = response
+            else:
+                wordlist_file=input('Provide path to wordlist file: ')
             print('')
             with open(wordlist_file) as file:
                 my_list = [x.rstrip() for x in file]   
