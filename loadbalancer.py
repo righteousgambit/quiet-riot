@@ -62,7 +62,7 @@ def balancedchecker(*wordlist):
             else:
                 pass
         else:
-            print('Your "Load Balancer" can"'"t count.')
+            print('Your "Load Balancer" does not count good.')
     if valid_list == 0:
         pass
     else:
