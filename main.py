@@ -192,7 +192,7 @@ while True:
         sys.exit()
     elif prompt1 == 'no':
         print('')
-        print("\033[0;32m"+f'If you have uploaded a wordlist, you can review your validated principals @ valid_scan_results.txt in your local directory.'+"\033[0m")
+        print("\033[0;32m"+f'If you have uploaded a wordlist, you can review your validated principals @ valid_principals.txt in your local directory.'+"\033[0m")
         print('')
         keep_going=input('Configure another wordlist? ').lower()
         print('')
