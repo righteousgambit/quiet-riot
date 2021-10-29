@@ -166,13 +166,23 @@ while True:
     #If user is finished with infrastructure, delete the created infrastructure
     if prompt1 == 'yes':
         #Delete ECR Public Repository - Resource that has IAM policy attachment
-        ecrpublic.delete_repository(
-            repositoryName=ecr_public_repo
-        )
+        public_repos = ecrpublic.describe_repositories()
+        for i in range(0, len(public_repos['repositories'])):
+            if len(public_repos['repositories']) != 0:
+                if 'quiet-riot-public-repo' in public_repos['repositories'][i]['repositoryName']:
+                    print("Deleting Quiet Riot Infrastructure: " +public_repos['repositories'][i]['repositoryName'])
+                    ecrpublic.delete_repository(repositoryName= public_repos['repositories'][i]['repositoryName'])
+                else:
+                    pass
         #Delete ECR Private Repository - Resource that has IAM policy attachment
-        ecrprivate.delete_repository(
-            repositoryName=ecr_private_repo
-        )
+        private_repos = ecrprivate.describe_repositories()        
+        for i in range(0, len(private_repos['repositories'])):
+            if len(private_repos['repositories']) != 0:
+                if 'quiet-riot-private-repo' in private_repos['repositories'][i]['repositoryName']:
+                    print("Deleting Quiet Riot Infrastructure: " +private_repos['repositories'][i]['repositoryName'])
+                    ecrprivate.delete_repository(repositoryName= private_repos['repositories'][i]['repositoryName'])
+                else:
+                    pass
         #Delete SNS Topic - Resource that has IAM policy attachment
         sns_topics = sns.list_topics()
         for i in range(0, len(sns_topics['Topics'])):
