@@ -46,17 +46,17 @@ def balancedchecker(*wordlist):
     # iterate over wordlist and allocate wordlist to enumeration service based on a random seed selected at time of function call
     rand_seed = rand.randint(0, 1000)
     for i in range(0, len(wordlist)):
-        if 0 <= rand_seed <= 499:
+        if 0 <= rand_seed <= 549:
             if ecrpubenum.ecr_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
-        elif 500 <= rand_seed <= 899:
+        elif 550 <= rand_seed <= 899:
             if snsenum.sns_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
-        elif 900 <= rand_seed <= 1000:
+        elif 920 <= rand_seed <= 1000:
             if ecrprivenum.ecr_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
@@ -89,7 +89,7 @@ def threader(words):
     # Flatten the new list
     flat_list = [item for sublist in new_list for item in sublist]
     # Write the results to valid_scan_results.txt in the results/ folder
-    with open ('results/valid_scan_results.txt', 'a+') as file:
+    with open ('wordlists/provided_account_ids.txt', 'a+') as file:
         for i in flat_list:
             file.write(str(i)+'\n')
     ct2 = datetime.datetime.now()
