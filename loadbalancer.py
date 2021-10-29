@@ -9,6 +9,7 @@ import queue
 import datetime
 import settings
 from os.path import exists
+import glob
 
 # Function to get a wordlist and ask how many threads, then split the wordlist into sub-wordlists of the appropriate size to generate the number of threads desired (approx) when passed to the threader function
 def getter(wordlist):
@@ -44,7 +45,7 @@ def balancedchecker(*wordlist):
     #create empty list of valid principals identified by scanning
     valid_list = []
     # iterate over wordlist and allocate wordlist to enumeration service based on a random seed selected at time of function call
-    rand_seed = rand.randint(0, 1000)
+    rand_seed = rand.randint(0, 100)
     for i in range(0, len(wordlist)):
         if 0 <= rand_seed <= 549:
             if ecrpubenum.ecr_princ_checker(wordlist[i]) == 'Pass':
@@ -62,7 +63,7 @@ def balancedchecker(*wordlist):
             else:
                 pass
         else:
-            print('No Action Taken')
+            print('Your rand_seed generator aint good at math')
     if valid_list == 0:
         pass
     else:
@@ -103,7 +104,9 @@ def threader(words):
     print('')
     print('Scan results can be found in the results sub-directory, if any valid_scan_results were identified.')
     # If the id_generator was used to create words.txt, you'll want to clean that up, so we do.
-    if exists('words.txt'):
-        os.remove('words.txt')
-    else:
-        pass
+    fileList=glob.glob("words-*")
+    for filePath in fileList:
+        try:
+            os.remove(filePath)
+        except:
+            print("Error while deleting file: ", filePath)

@@ -175,10 +175,15 @@ while True:
         )
         #Delete SNS Topic - Resource that has IAM policy attachment
         sns_topics = sns.list_topics()
-        sns_target_arn = sns_topics['Topics'][0]['TopicArn']
-        sns.delete_topic(
-            TopicArn= f'{sns_target_arn}'
-        )
+        for i in range(0, len(sns_topics['Topics'])):
+            if len(sns_topics['Topics']) != 0:
+                if 'quiet-riot-sns-topic' in sns_topics['Topics'][i]['TopicArn']:
+                    print("Deleting Quiet Riot Infrastructure: " +sns_topics['Topics'][i]['TopicArn'])
+                    sns.delete_topic(TopicArn= sns_topics['Topics'][i]['TopicArn'])
+                else:
+                    pass
+            else:
+                print("There are no topics to delete.")
         print('')
         #Ask user if they want valid principals file downloaded
         print('')
