@@ -63,7 +63,11 @@ def balancedchecker(*wordlist):
             else:
                 pass
         else:
+<<<<<<< HEAD
             print('Your rand_seed generator aint good at math')
+=======
+            print('Your "Load Balancer" does not count good.')
+>>>>>>> 943dfff741c8862399f9f0048e2b1682715e8ae1
     if valid_list == 0:
         pass
     else:
@@ -90,7 +94,7 @@ def threader(words):
     # Flatten the new list
     flat_list = [item for sublist in new_list for item in sublist]
     # Write the results to valid_scan_results.txt in the results/ folder
-    with open ('wordlists/provided_account_ids.txt', 'a+') as file:
+    with open ('results/valid_scan_results.txt', 'a+') as file:
         for i in flat_list:
             file.write(str(i)+'\n')
     ct2 = datetime.datetime.now()
