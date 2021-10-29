@@ -51,7 +51,7 @@ def balancedchecker(*wordlist):
                 valid_list.append(wordlist[i])
             else:
                 pass
-        elif 550 <= rand_seed <= 899:
+        elif 550 <= rand_seed <= 919:
             if snsenum.sns_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
