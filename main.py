@@ -54,8 +54,7 @@ ecrpublic = boto3.client('ecr-public', config = config)
 
 #Requests user to provide required info to kick off scan
 def words_type():
-    # TODO: Add footprinting capability and pass footprinting to words()
-    wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, users, or roles? '+"\033[0m").lower()
+    wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts (account IDs), users, roles, or footprint (of an account)? '+"\033[0m").lower()
     print('')
     while True:
         if wordlist_type == 'accounts':
@@ -66,6 +65,10 @@ def words_type():
             account_no=input('Please provide an Account ID to scan against: ')
             print('')
             return 'roles', account_no
+        elif wordlist_type == 'footprint':
+            account_no=input('Please provide an Account ID to scan against: ')
+            print('')
+            return 'footprint', account_no
         elif wordlist_type == 'users':
             account_no=input('Please provide an Account ID to scan against: ')
             print('')
@@ -92,12 +95,23 @@ def words():
                 pass
             if wordlist_type == 'accounts':
                 wordlist_file = response
+            elif wordlist_type == 'footprint':
+                wordlist_file = 'wordlists/service-linked-roles.txt'
             else:
                 wordlist_file=input('Provide path to wordlist file: ')
             print('')
             with open(wordlist_file) as file:
                 my_list = [x.rstrip() for x in file]   
                 if wordlist_type == 'roles':
+                    for item in my_list:
+                        new_list.append('arn:aws:iam::'+account_no+':role/'+item)
+                    with open(wordlist, 'a+') as f:
+                        for item in new_list:
+                            f.write("%s\n" % item)
+                    # Configure user-defined wordlist as roles for triggering via enumeration.loadbalancer.threader(getter())
+                    loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
+                    break
+                elif wordlist_type == 'footprint':
                     for item in my_list:
                         new_list.append('arn:aws:iam::'+account_no+':role/'+item)
                     with open(wordlist, 'a+') as f:
