@@ -1,4 +1,0 @@
-847375929072
-522298605558
-arn:aws:iam::391929110991:role/aws-service-role/support.amazonaws.com/AWSServiceRoleForSupport
-arn:aws:iam::391929110991:role/aws-service-role/trustedadvisor.amazonaws.com/AWSServiceRoleForTrustedAdvisor

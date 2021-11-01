@@ -54,6 +54,7 @@ ecrpublic = boto3.client('ecr-public', config = config)
 
 #Requests user to provide required info to kick off scan
 def words_type():
+    # TODO: Add footprinting capability and pass footprinting to words()
     wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, users, or roles? '+"\033[0m").lower()
     print('')
     while True:
@@ -114,6 +115,7 @@ def words():
                     # Configure user-defined wordlist as users for triggering via enumeration.loadbalancer.threader(getter())
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
                     break
+                # TODO: Separate root accounts and setup s3 ACL check for root e-mail. Determine if root e-mail is only enumerable using s3 ACL
                 elif wordlist_type == 'accounts' or 'root account':
                     for item in my_list:
                         new_list.append(item)
