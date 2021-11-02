@@ -52,11 +52,18 @@ To attempt every possible Account ID in AWS (1,000,000,000,000) would require an
 | 28 | __EFS__ | Managed Serverless Elastic File System | Unknown | Unknown | No |
 
 ## Getting Started With Quiet Riot
-To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts. If you don't bring your own wordlists, feel free to use one from the wordlists/ directory and I further recommend [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
+To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts. 
+
+If you want to footprint the services in-use (or previously in use) for a specific account, select footprint. It will automatically leverage a wordlist composed of service-linked roles that indicate a particular service is or has been in use in an account.
+
+If you want to help identify valid Account IDs, you can select accounts and it will automatically generate a wordlist of random Account IDs of arbitrary (user-selected) size. Please consider making a pull request against the repository to include newly identified valid account IDs under wordlists/known_valid_account_ids.txt. I have collected <100k Account IDs and estimate there are between 50-60m Account IDs based on random sampling analysis.  
+  
+Otherwise, you will want to use your own wordlist as a dictionary to guess User names or Role names for a specific account.
+
+If you don't bring your own wordlists, I recommend starting with [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
 
 ### Prerequisites
 awscli  
-boto3  
-botocore  
+boto3/botocore  
 Sufficient AWS credentials configured via CLI
 
