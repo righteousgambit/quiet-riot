@@ -58,9 +58,7 @@ If you want to footprint the services in-use (or previously in use) for a specif
 
 If you want to help identify valid Account IDs, you can select accounts and it will automatically generate a wordlist of random Account IDs of arbitrary (user-selected) size. Please consider making a pull request against the repository to include newly identified valid account IDs under wordlists/known_valid_account_ids.txt. I have collected <100k Account IDs and estimate there are between 50-60m Account IDs based on random sampling analysis.  
   
-Otherwise, you will want to use your own wordlist as a dictionary to guess User names or Role names for a specific account.
-
-If you don't bring your own wordlists, I recommend starting with [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
+Otherwise, you will want to use your own wordlist as a dictionary to guess User names or Role names for a specific account. If you don't bring your own wordlists, I recommend starting with [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
 
 ### Prerequisites
 awscli  
