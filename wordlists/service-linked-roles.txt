@@ -132,3 +132,13 @@ AWSControlTowerCloudTrailRole
 OrganizationFormationBuildAccessRole
 AWS-Landing-Zone-ConfigRecorderRole
 aws-elasticbeanstalk-ec2-role
+AWSGlueServiceRoleDefault
+EMR_DefaultRole
+EMR_EC2_DefaultRole
+saml-provider/pingreadonlyprov
+saml-provider/SAMLADFS
+saml-provider/salesforce
+saml-provider/MyAuth0
+saml-provider/okta-databricks
+saml-provider/AzureAD
+saml-provider/GoogleSAML
