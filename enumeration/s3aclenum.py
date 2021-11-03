@@ -8,22 +8,17 @@ myconfig = Config(
     )
 )
 
-
+rand_account_id = 'wsladd@icloud.com'
 
 client = boto3.client('s3', config=myconfig)
 response = client.put_bucket_acl(
-    ACL='private'|'public-read'|'public-read-write'|'authenticated-read',
     AccessControlPolicy={
         'Grants': [
             {
                 'Grantee': {
-                    'DisplayName': 'string',
-                    'EmailAddress': 'string',
-                    'ID': 'string',
-                    'Type': 'CanonicalUser'|'AmazonCustomerByEmail'|'Group',
-                    'URI': 'string'
+                    'EmailAddress': rand_account_id,
                 },
-                'Permission': 'FULL_CONTROL'|'WRITE'|'WRITE_ACP'|'READ'|'READ_ACP'
+                'Permission': 'READ'
             },
         ],
         'Owner': {
@@ -32,10 +27,5 @@ response = client.put_bucket_acl(
         }
     },
     Bucket='string',
-    GrantFullControl='string',
-    GrantRead='string',
-    GrantReadACP='string',
-    GrantWrite='string',
-    GrantWriteACP='string',
     ExpectedBucketOwner='string'
 )

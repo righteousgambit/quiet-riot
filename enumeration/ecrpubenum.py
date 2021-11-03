@@ -10,7 +10,7 @@ import settings
 
 config = Config(
     retries = dict(
-        max_attempts = 7
+        max_attempts = 10
     )
 )
 
@@ -52,5 +52,5 @@ def ecr_princ_checker(rand_account_id):
     except client.exceptions.InvalidParameterException as e:
         return ("Fail")
     except BaseException as err:
-      print(f"Unexpected {err=}, {type(err)=}")
+      print(f"You're being throttled by ECR-Public and {rand_account_id} was not checked.")
       pass

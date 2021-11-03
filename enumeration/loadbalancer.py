@@ -47,12 +47,12 @@ def balancedchecker(*wordlist):
     # iterate over wordlist and allocate wordlist to enumeration service based on a random seed selected at time of function call
     rand_seed = rand.randint(0, 1000)
     for i in range(0, len(wordlist)):
-        if 0 <= rand_seed <= 549:
+        if 0 <= rand_seed <= 699:
             if ecrpubenum.ecr_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
-        elif 550 <= rand_seed <= 919:
+        elif 700 <= rand_seed <= 919:
             if snsenum.sns_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
