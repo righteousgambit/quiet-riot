@@ -91,9 +91,6 @@ def words():
         try:
             if wordlist_type == 'accounts':
                 response = rand_id_generator.rand_id_generator()
-            else:
-                pass
-            if wordlist_type == 'accounts':
                 wordlist_file = response
             elif wordlist_type == 'footprint':
                 wordlist_file = 'wordlists/service-linked-roles.txt'
