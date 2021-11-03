@@ -45,7 +45,7 @@ def balancedchecker(*wordlist):
     #create empty list of valid principals identified by scanning
     valid_list = []
     # iterate over wordlist and allocate wordlist to enumeration service based on a random seed selected at time of function call
-    rand_seed = rand.randint(0, 100)
+    rand_seed = rand.randint(920, 1000)
     for i in range(0, len(wordlist)):
         if 0 <= rand_seed <= 549:
             if ecrpubenum.ecr_princ_checker(wordlist[i]) == 'Pass':

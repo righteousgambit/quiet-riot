@@ -29,7 +29,7 @@ def ecr_princ_checker(rand_account_id):
                     "ecr:ReplicateImage"
                 ],
                 "Resource": [
-                    f'arn:aws:ecr:us-east-1:201012399609:repository/{settings.scan_objects[1]}/*' # Needs to be updated to be more generalized
+                    f'arn:aws:ecr:us-east-1:{settings.account_no}:repository/{settings.scan_objects[1]}/*' # Needs to be updated to be more generalized
                 ]
             }
         ]

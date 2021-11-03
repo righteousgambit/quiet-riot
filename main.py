@@ -62,19 +62,19 @@ def words_type():
         elif wordlist_type == 'root account':
             return 'root-account', 'none'
         elif wordlist_type == 'roles':
-            account_no=input('Please provide an Account ID to scan against: ')
+            account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'roles', account_no
         elif wordlist_type == 'footprint':
-            account_no=input('Please provide an Account ID to scan against: ')
+            account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'footprint', account_no
         elif wordlist_type == 'users':
-            account_no=input('Please provide an Account ID to scan against: ')
+            account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'users', account_no
         elif wordlist_type == 'groups':
-            account_no=input('Please provide an Account ID to scan against: ')
+            account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'groups', account_no
         else:
