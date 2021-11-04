@@ -26,10 +26,10 @@ def s3_acl_princ_checker(rand_account_id):
                     },
                 ],
                 'Owner': {
-                    'ID': settings.scan_objects[3]
+                    'ID': settings.scan_objects[4]
                 }
             },
-            Bucket='quiet-riot-global-bucket',
+            Bucket=settings.scan_objects[3],
             ExpectedBucketOwner=settings.account_no
     )
         return 'Pass'

@@ -204,11 +204,13 @@ s3.create_bucket(
 # )
 
 canonical_id = s3.list_buckets()['Owner']['ID']
-# Create list from created resource names
+
+# Generate list from created resource names
 settings.init()
 settings.scan_objects.append(ecr_public_repo) 
-settings.scan_objects.append(ecr_private_repo) 
+settings.scan_objects.append(ecr_private_repo)
 settings.scan_objects.append("arn:aws:sns:us-east-1:"+settings.account_no+":"+sns_topic)
+settings.scan_objects.append(s3_bucket)
 settings.scan_objects.append(canonical_id)
 
 # Call initial workflow that takes a user wordlist and starts a scan.
