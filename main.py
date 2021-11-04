@@ -88,7 +88,7 @@ def words_type():
         else:
             print('You did not enter a valid wordlist type.')
             print('')
-            wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, users, or roles? '+"\033[0m").lower()
+            wordlist_type=input("\033[0;31m"+'Enter a number between 1-5 '+"\033[0m").lower()
 
 #Creates final wordlist based on type of scanning to be performed.
 def words():
