@@ -1,8 +1,9 @@
-from quiet_riot.shared.utils import get_boto3_client, get_current_account_id, print_green
+from quiet_riot.shared.utils import get_boto3_client, get_current_account_id, print_green, print_yellow
 from quiet_riot.infra.ecr_repository import EcrRepository
 from quiet_riot.infra.ecr_public_registry import EcrPublicRegistry
 from quiet_riot.infra.s3_bucket import S3Bucket
 from quiet_riot.infra.sns_topic import SnsTopic
+from quiet_riot.infra.secrets_manager import SecretsManagerSecret
 
 
 class InfraNotCreated(Exception):
@@ -18,8 +19,9 @@ class QuietInfra:
         # Attributes per infrastructure type
         self.ecr_public_repo = EcrPublicRegistry(region=region, profile=profile)
         self.ecr_private_repo = EcrRepository(region=region, profile=profile)
-        self.sns_topic = SnsTopic(profile=profile, region=region)
         self.s3_bucket = S3Bucket(profile=profile, region=region)
+        self.secrets_manager_secret = SecretsManagerSecret(profile=profile, region=region)
+        self.sns_topic = SnsTopic(profile=profile, region=region)
 
     def create(self):
         """Create the infrastructure"""
@@ -29,6 +31,8 @@ class QuietInfra:
         self.ecr_public_repo.create()
         print_green("Creating S3 Bucket...")
         self.s3_bucket.create()
+        print_green("Creating Secrets Manager Secret...")
+        self.secrets_manager_secret.create()
         print_green("Creating SNS Topics...")
         self.sns_topic.create()
 
@@ -37,8 +41,9 @@ class QuietInfra:
         resources = set()
         resources.update(set(self.ecr_public_repo.list()))
         resources.update(set(self.ecr_private_repo.list()))
-        resources.update(set(self.sns_topic.list()))
         resources.update(set(self.s3_bucket.list()))
+        resources.update(set(self.secrets_manager_secret.list()))
+        resources.update(set(self.sns_topic.list()))
         resources = list(resources)
         resources.sort()
         return resources
@@ -49,11 +54,13 @@ class QuietInfra:
         self.ecr_private_repo.delete()
         print_green("Deleting ECR Public Repository...")
         self.ecr_public_repo.delete()
+        print_green("Deleting S3 Bucket...")
+        print_yellow("\tSkipping deletion of S3 bucket to avoid 1 hour delay before bucket with same name can be created.")
+        # self.s3_bucket.delete()
+        print_green("Deleting Secrets Manager Secret...")
+        self.secrets_manager_secret.delete()
         print_green("Deleting SNS Topic...")
         self.sns_topic.delete()
-        print_green("Skipping deletion of S3 bucket to avoid 1 hour delay before bucket with same name can be created.")
-        # print_green("Deleting S3 Bucket...")
-        # self.s3_bucket.delete()
 
     def verify_exists(self):
         """Quick method to verify that infrastructure exists"""

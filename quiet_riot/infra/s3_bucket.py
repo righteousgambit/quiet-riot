@@ -24,7 +24,6 @@ class S3Bucket:
         self.bucket = s3.Bucket(self.name)
 
     def create(self):
-        """Create the repositories if they do not exist"""
         """Create an S3 bucket"""
         try:
             # No location constraint is needed for us-east-1, per https://stackoverflow.com/questions/51912072/invalidlocationconstraint-error-while-creating-s3-bucket-when-the-used-command-i#answer-51912090
@@ -61,7 +60,7 @@ class S3Bucket:
                 resources.append(arn)
         return resources
 
-    def list_report_objects(self) -> list:
+    def list_objects(self) -> list:
         """List the reports in the bucket"""
         try:
             # Delete items in the bucket
@@ -78,7 +77,7 @@ class S3Bucket:
     def clean_objects(self, verbosity: int = 0):
         """Clean the objects in the bucket"""
         try:
-            object_keys = self.list_report_objects()
+            object_keys = self.list_objects()
             # Delete items in the bucket
             self.bucket.objects.all().delete()
             if verbosity > 1:
@@ -103,10 +102,10 @@ class S3Bucket:
         # Implement object to take my_managed_policy and parse for the generated account ID - then send that as return, not the fully policy
         try:
             response = self.client.put_bucket_policy(
-                Bucket=self.name,  # TODO name of bucket that we put the policy against.
+                Bucket=self.name,
                 ConfirmRemoveSelfBucketAccess=False,
                 Policy=json.dumps(my_managed_policy),
-                ExpectedBucketOwner=self.account_id  # TODO name of expected bucket owner
+                ExpectedBucketOwner=self.account_id
             )
             print(rand_account_id)
             return "Pass"
