@@ -93,7 +93,7 @@ def words():
                 response = rand_id_generator.rand_id_generator()
                 wordlist_file = response
             elif wordlist_type == 'footprint':
-                wordlist_file = 'wordlists/service-linked-roles.txt'
+                wordlist_file = 'quiet_riot/shared/data/service-linked-roles.txt'
             else:
                 wordlist_file=input('Provide path to wordlist file: ')
             print('')

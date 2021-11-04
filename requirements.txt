@@ -1,0 +1,5 @@
+click==8.0.3
+click_option_group==0.5.3
+botocore==1.22.9
+boto3==1.19.9
+colorama==0.4.4
