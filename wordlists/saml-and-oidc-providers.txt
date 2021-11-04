@@ -1,0 +1,8 @@
+saml-provider/pingreadonlyprov
+saml-provider/SAMLADFS
+saml-provider/salesforce
+saml-provider/MyAuth0
+saml-provider/okta-databricks
+saml-provider/AzureAD
+saml-provider/GoogleSAML
+saml-provider/GoogleApps

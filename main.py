@@ -47,6 +47,7 @@ ________        .__        __    __________.__        __
 
 sts = boto3.client('sts')
 #Create clients required for Quiet Riot Enumeration Infrastructure
+iam = boto3.client('iam', config = config)
 s3 = boto3.client('s3', config = config)
 sns = boto3.client('sns', config = config)
 ecrprivate = boto3.client('ecr', config = config)
@@ -174,12 +175,6 @@ def words():
 ##                                                                         ##
 #############################################################################
 
-#Create s3 bucket to scan against
-s3_bucket = f'quiet-riot-bucket-{uuid.uuid4().hex}'
-s3.create_bucket(
-    Bucket=s3_bucket
-)
-
 #Create ECR Public Repository - Resource that has IAM policy attachment
 ecr_public_repo = f'quiet-riot-public-repo-{uuid.uuid4().hex}'
 ecrpublic.create_repository(
@@ -195,6 +190,18 @@ sns_topic = f'quiet-riot-sns-topic-{uuid.uuid4().hex}'
 sns.create_topic(
     Name=sns_topic
 )
+#Create s3 bucket to scan against for root account e-mail addresses.
+s3_bucket = f'quiet-riot-bucket-{uuid.uuid4().hex}'
+s3.create_bucket(
+    Bucket=s3_bucket
+)
+
+#Create IAM role to scan against for SAML and OIDC providers.
+# iam_role = f'quiet-riot-role-{uuid.uuid4().hex}'
+# iam.create_role(
+#     RoleName='string',
+#     AssumeRolePolicyDocument='string'
+# )
 
 canonical_id = s3.list_buckets()['Owner']['ID']
 # Create list from created resource names
