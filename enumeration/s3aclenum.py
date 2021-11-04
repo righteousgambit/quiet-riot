@@ -2,6 +2,7 @@
 import boto3
 from botocore.exceptions import ClientError
 from botocore.config import Config
+import settings
 
 myconfig = Config(
     retries = dict(
@@ -25,11 +26,11 @@ def s3_acl_princ_checker(rand_account_id):
                     },
                 ],
                 'Owner': {
-                    'ID': '9523268a3a3b5a4599d502f2f8bb3678b6df2e9bdce8293dfd62960fb070e000'
+                    'ID': settings.scan_objects[3]
                 }
             },
             Bucket='quiet-riot-global-bucket',
-            ExpectedBucketOwner='201012399609'
+            ExpectedBucketOwner=settings.account_no
     )
         return 'Pass'
     except BaseException as err:

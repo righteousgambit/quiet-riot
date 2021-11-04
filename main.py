@@ -47,6 +47,7 @@ ________        .__        __    __________.__        __
 
 sts = boto3.client('sts')
 #Create clients required for Quiet Riot Enumeration Infrastructure
+s3 = boto3.client('s3', config = config)
 sns = boto3.client('sns', config = config)
 ecrprivate = boto3.client('ecr', config = config)
 ecrpublic = boto3.client('ecr-public', config = config)
@@ -173,6 +174,12 @@ def words():
 ##                                                                         ##
 #############################################################################
 
+#Create s3 bucket to scan against
+s3_bucket = f'quiet-riot-bucket-{uuid.uuid4().hex}'
+s3.create_bucket(
+    Bucket=s3_bucket
+)
+
 #Create ECR Public Repository - Resource that has IAM policy attachment
 ecr_public_repo = f'quiet-riot-public-repo-{uuid.uuid4().hex}'
 ecrpublic.create_repository(
@@ -189,12 +196,15 @@ sns.create_topic(
     Name=sns_topic
 )
 
+canonical_id = s3.list_buckets()['Owner']['ID']
 # Create list from created resource names
 settings.init()
 settings.scan_objects.append(ecr_public_repo) 
 settings.scan_objects.append(ecr_private_repo) 
 settings.scan_objects.append("arn:aws:sns:us-east-1:"+settings.account_no+":"+sns_topic)
+settings.scan_objects.append(canonical_id)
 
+print(canonical_id)
 # Call initial workflow that takes a user wordlist and starts a scan.
 words()
 
@@ -207,6 +217,14 @@ while True:
     time.sleep(1)
     #If user is finished with infrastructure, delete the created infrastructure
     if prompt1 == 'yes':
+        buckets = s3.list_buckets()
+        for i in range(0, len(buckets['Buckets'])):
+            if len(buckets['Buckets']) != 0:
+                if 'quiet-riot-bucket' in buckets['Buckets'][i]['Name']:
+                    print("Deleting Quiet Riot Infrastructure: " +buckets['Buckets'][i]['Name'])
+                    s3.delete_bucket(Bucket= buckets['Buckets'][i]['Name'])
+                else:
+                    pass
         #Delete ECR Public Repository - Resource that has IAM policy attachment
         public_repos = ecrpublic.describe_repositories()
         for i in range(0, len(public_repos['repositories'])):
