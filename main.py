@@ -9,6 +9,7 @@ from os import environ
 import glob
 import enumeration.loadbalancer as loadbalancer
 import enumeration.rand_id_generator as rand_id_generator
+import enumeration.s3aclenum as s3aclenum
 import enumeration.ecrprivenum
 import enumeration.ecrpubenum
 import enumeration.snsenum
@@ -54,29 +55,36 @@ ecrpublic = boto3.client('ecr-public', config = config)
 
 #Requests user to provide required info to kick off scan
 def words_type():
-    wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts (account IDs), users, roles, or footprint (of an account)? '+"\033[0m").lower()
+    print(("\033[0;31m"+'What type of scan do you want to attempt? '+"\033[0m"))
+    print('1. accounts')
+    print('2. root account')
+    print('3. account footprint')
+    print('4. roles')
+    print('5. users')
+    print()
+    wordlist_type=input('Scan Type: ').lower()
     print('')
     while True:
-        if wordlist_type == 'accounts':
+        if wordlist_type == '1':
             return 'accounts', 'none'
-        elif wordlist_type == 'root account':
-            return 'root-account', 'none'
+        elif wordlist_type == '2':
+            return 'root account', 'none'
         elif wordlist_type == 'roles':
             account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'roles', account_no
-        elif wordlist_type == 'footprint':
+        elif wordlist_type == '3':
             account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'footprint', account_no
-        elif wordlist_type == 'users':
+        elif wordlist_type == '4':
+            account_no=input('Provide an Account ID to scan against: ')
+            print('')
+            return 'roles', account_no
+        elif wordlist_type == '5':
             account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'users', account_no
-        elif wordlist_type == 'groups':
-            account_no=input('Provide an Account ID to scan against: ')
-            print('')
-            return 'groups', account_no
         else:
             print('You did not enter a valid wordlist type.')
             print('')
@@ -98,7 +106,7 @@ def words():
                 wordlist_file=input('Provide path to wordlist file: ')
             print('')
             with open(wordlist_file) as file:
-                my_list = [x.rstrip() for x in file]   
+                my_list = [x.rstrip() for x in file] 
                 if wordlist_type == 'roles':
                     for item in my_list:
                         new_list.append('arn:aws:iam::'+account_no+':role/'+item)
@@ -127,7 +135,7 @@ def words():
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
                     break
                 # TODO: Separate root accounts and setup s3 ACL check for root e-mail. Determine if root e-mail is only enumerable using s3 ACL
-                elif wordlist_type == 'accounts' or 'root account':
+                elif wordlist_type == 'accounts':
                     for item in my_list:
                         new_list.append(item)
                     with open(wordlist, 'a+') as f:
@@ -135,6 +143,19 @@ def words():
                             f.write("%s\n" % item)
                     # Configure user-defined wordlist as account IDs or root account e-mails for triggering via enumeration.loadbalancer.threader(getter())
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
+                    break
+                elif wordlist_type == 'root account':
+                    valid_emails = []
+                    print('Indentified Root Account E-mail Addresses:')
+                    for i in my_list:
+                        if s3aclenum.s3_acl_princ_checker(i) == 'Pass':
+                            print(i)
+                            valid_emails.append(i)
+                        else:
+                            pass
+                    with open ('results/valid_scan_results.txt', 'a+') as f:
+                        for i in valid_emails:
+                            f.write("%s\n" % i)
                     break
                 else: 
                     print('Scan type provided is not valid.')
@@ -182,7 +203,7 @@ words()
 while True:
     print('')
     time.sleep(1)
-    prompt1= 'yes'# TODO: figure out why it can't take "no" - the threads never finish a second time through...think I need to clear the threads... input('Finished Scanning? Answer "yes" to delete your infrastructure: ').lower()
+    prompt1= 'yes'# TODO: figure out why it can't take "no" - the threads never finish a second time through...think I need to clear the threads... #input('Finished Scanning? Answer "yes" to delete your infrastructure: ').lower()
     time.sleep(1)
     #If user is finished with infrastructure, delete the created infrastructure
     if prompt1 == 'yes':

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import boto3
+from botocore.exceptions import ClientError
 from botocore.config import Config
 
 myconfig = Config(
@@ -8,24 +9,28 @@ myconfig = Config(
     )
 )
 
-rand_account_id = 'wsladd@icloud.com'
-
 client = boto3.client('s3', config=myconfig)
-response = client.put_bucket_acl(
-    AccessControlPolicy={
-        'Grants': [
-            {
-                'Grantee': {
-                    'EmailAddress': rand_account_id,
-                },
-                'Permission': 'READ'
+
+def s3_acl_princ_checker(rand_account_id):
+    try:
+        client.put_bucket_acl(
+            AccessControlPolicy={
+                'Grants': [
+                    {
+                        'Grantee': {
+                            'EmailAddress': rand_account_id,
+                            'Type': 'AmazonCustomerByEmail',
+                        },
+                        'Permission': 'READ'
+                    },
+                ],
+                'Owner': {
+                    'ID': '9523268a3a3b5a4599d502f2f8bb3678b6df2e9bdce8293dfd62960fb070e000'
+                }
             },
-        ],
-        'Owner': {
-            'DisplayName': 'string',
-            'ID': 'string'
-        }
-    },
-    Bucket='string',
-    ExpectedBucketOwner='string'
-)
+            Bucket='quiet-riot-global-bucket',
+            ExpectedBucketOwner='201012399609'
+    )
+        return 'Pass'
+    except BaseException as err:
+        pass
