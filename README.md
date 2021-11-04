@@ -5,7 +5,8 @@ _An enumeration tool for scalable, unauthenticated validation of AWS principals;
 
 __Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 
-See the blog post [here]()
+See the introductory blog post [here](https://blog.traingrc.com/introducing-quiet-riot-c595cfa629e)
+See a defender's perspective blog post [here](https://blog.traingrc.com/quiet-riot-a-defenders-perspective-5c569185effc)
 
 ### Featureploitation Limits
 #### Throttling
@@ -61,7 +62,6 @@ If you want to help identify valid Account IDs, you can select accounts and it w
 Otherwise, you will want to use your own wordlist as a dictionary to guess User names or Role names for a specific account. If you don't bring your own wordlists, I recommend starting with [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
 
 ### Prerequisites
-awscli  
 boto3/botocore  
 Sufficient AWS credentials configured via CLI
 
