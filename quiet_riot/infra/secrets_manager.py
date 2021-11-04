@@ -29,6 +29,11 @@ class SecretsManagerSecret:
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'ResourceExistsException':
                 print_yellow(f"\tResourceExistsException: The secret '{self.arn}' already exists. Skipping...")
+            # If the key is scheduled for deletion, restore it instead
+            elif error.response['Error']['Code'] == 'InvalidRequestException':
+                self.client.restore_secret(
+                    SecretId=self.name
+                )
             else:
                 raise error
 
