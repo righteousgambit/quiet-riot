@@ -1,1 +1,14 @@
 .DS_Store
+.idea
+.coverage
+.pytest_cache
+
+# HashiCorp
+**/.terraform/*
+*.plan
+*.tfstate
+*.tfstate.*
+!terraform.tfvars
+.vagrant
+packer_cache/
+*.box
