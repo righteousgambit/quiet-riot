@@ -5,12 +5,12 @@ We spread this technique across multiple resources that support resource-based p
 
 Migration status:
 
-- [ ] Code Artifact
+- [x] Code Artifact
 - [x] ECR Public
 - [x] ECR Private
 - [ ] S3 bucket ACLs
-- [ ] S3 bucket policies
-- [ ] Secrets manager
+- [x] S3 bucket policies
+- [x] Secrets manager
 - [x] SNS Topic
 
 After the above are migrated, we can add on more resources to speed things up in the future.
