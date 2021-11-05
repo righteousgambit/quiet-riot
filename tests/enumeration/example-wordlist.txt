@@ -1,0 +1,5 @@
+aws-service-role/access-analyzer.amazonaws.com/AWSServiceRoleForAccessAnalyzer
+aws-service-role/accountdiscovery.ssm.amazonaws.com/AWSServiceRoleForAmazonSSM_AccountDiscovery
+aws-service-role/acm.amazonaws.com/AWSServiceRoleForCertificateManager
+aws-service-role/appmesh.amazonaws.com/AWSServiceRoleForAppMesh
+aws-service-role/apprunner.amazonaws.com/AWSServiceRoleForAppRunner
