@@ -18,7 +18,7 @@ def getter(wordlist):
     print('')
     print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.')
     print('')
-    threads = 700 #input('# of threads: ')
+    threads = input('# of threads: ')
     with open(wordlist) as file:
         my_list = [x.rstrip() for x in file]
     list_size = int(len(my_list)/int(threads))
