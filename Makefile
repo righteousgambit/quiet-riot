@@ -91,5 +91,4 @@ infra-destroy:
 footprint:
 	./quiet_riot/bin/cli.py footprint -a 464622532012
 enum-roles:
-
-	./quiet_riot/bin/cli.py footprint -a 464622532012
+	./quiet_riot/bin/cli.py enum -a 464622532012
