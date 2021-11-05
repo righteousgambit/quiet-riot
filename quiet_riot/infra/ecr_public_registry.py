@@ -31,7 +31,7 @@ class EcrPublicRegistry:
             )
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'RepositoryAlreadyExistsException':
-                print_yellow(f"\tRepositoryAlreadyExistsException: The repository '{self.arn}' already exists. Skipping...")
+                print_yellow(f"\tThe repository '{self.arn}' already exists. Skipping...")
             else:
                 raise error
 
@@ -58,7 +58,7 @@ class EcrPublicRegistry:
             )
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'RepositoryNotFoundException':
-                print_yellow(f"\tRepositoryNotFoundException: The repository '{self.arn}' does not exist so we don't need to delete it. Skipping...")
+                print_yellow(f"\tThe repository '{self.arn}' does not exist so we don't need to delete it. Skipping...")
             else:
                 raise error
 

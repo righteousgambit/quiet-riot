@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 """"
-Example usage to scan DataDog:
+Example usage to scan Fortinet:
 
-quiet-riot footprint -a 464622532012
+quiet-riot footprint -a 854209929931
 """
 @click.command(
     name="footprint",
@@ -22,7 +22,6 @@ quiet-riot footprint -a 464622532012
 )
 @optgroup.group("Main Arguments", help="")
 @optgroup.option("-a", "--target-account", "target_account", type=str, required=True, help="The target AWS account ID.", envvar="TARGET_ACCOUNT")
-@optgroup.option("-pt", "--principal-type", "principal_type", type=click.Choice(constants.VALID_PRINCIPAL_TYPES), required=True, default="role", help="The wordlist file containing AWS principals to enumerate.")
 @optgroup.option("-tc", "--thread-count", "thread_count", type=int, required=False, default=700, help="The thread count.")
 @optgroup.group("File options", help="")
 @optgroup.option("-w", "--wordlist-file", "wordlist_file", type=click.Path(exists=True), required=True, default=constants.SERVICE_LINKED_ROLES_FILE, help="The wordlist file containing AWS principals to enumerate.")
@@ -32,11 +31,11 @@ quiet-riot footprint -a 464622532012
 @optgroup.option("-r", "--region", "region", type=str, required=False, default="us-east-1", help="The AWS region.", envvar="AWS_DEFAULT_REGION")
 @optgroup.group("Other Options", help="")
 @optgroup.option("-v", "--verbose", "verbosity", help="Log verbosity level.", count=True)
-def footprint(target_account: str, principal_type: str, thread_count: int, wordlist_file: str, output_file: str, profile: str, region: str, verbosity: int):
+def footprint(target_account: str, thread_count: int, wordlist_file: str, output_file: str, profile: str, region: str, verbosity: int):
     """Footprint the services used by an AWS Account"""
     set_log_level(verbosity)
     # Get the wordlist and render it as a new list in ARN format, with the account ID and principal type
-    wordlist = get_rendered_wordlist(wordlist_principal_type=principal_type, target_account_number=target_account, wordlist_file=wordlist_file)
+    wordlist = get_rendered_wordlist(wordlist_principal_type="role", target_account_number=target_account, wordlist_file=wordlist_file)
     # Create the object to manage infra
     quiet_infra = QuietInfra(region=region, profile=profile)
     # Verify that the infrastructure exists first. We want to make the user explicitly create the infra instead of just randomly creating shit in their account

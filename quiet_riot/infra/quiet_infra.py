@@ -1,4 +1,5 @@
 from quiet_riot.shared.utils import get_boto3_client, get_current_account_id, print_green, print_yellow
+from quiet_riot.infra.code_artifact import CodeArtifactDomain
 from quiet_riot.infra.ecr_repository import EcrRepository
 from quiet_riot.infra.ecr_public_registry import EcrPublicRegistry
 from quiet_riot.infra.lambda_function import LambdaFunction
@@ -18,6 +19,7 @@ class QuietInfra:
         sts_client = get_boto3_client(service="sts", profile=self.profile, region=self.region)
         self.account_id = get_current_account_id(sts_client=sts_client)
         # Attributes per infrastructure type
+        self.code_artifact_domain = CodeArtifactDomain(region=region, profile=profile)
         self.ecr_public_repo = EcrPublicRegistry(region=region, profile=profile)
         self.ecr_private_repo = EcrRepository(region=region, profile=profile)
         self.lambda_function = LambdaFunction(region=region, profile=profile)
@@ -27,6 +29,8 @@ class QuietInfra:
 
     def create(self):
         """Create the infrastructure"""
+        print_green("Creating CodeArtifact Domain...")
+        self.code_artifact_domain.create()
         print_green("Creating ECR Private Repository...")
         self.ecr_private_repo.create()
         print_green("Creating ECR Public Repository...")
@@ -43,6 +47,7 @@ class QuietInfra:
     def list(self):
         """List the infrastructure ARNs"""
         resources = set()
+        resources.update(set(self.code_artifact_domain.list()))
         resources.update(set(self.ecr_public_repo.list()))
         resources.update(set(self.ecr_private_repo.list()))
         resources.update(set(self.lambda_function.list()))
@@ -55,6 +60,8 @@ class QuietInfra:
 
     def delete(self):
         """Delete the Quiet Riot infrastructure"""
+        print_green("Deleting CodeArtifact Domain...")
+        self.code_artifact_domain.delete()
         print_green("Deleting ECR Private Repository...")
         self.ecr_private_repo.delete()
         print_green("Deleting ECR Public Repository...")

@@ -30,7 +30,7 @@ class SnsTopic:
             )
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'InternalErrorException':
-                print_yellow(f"\tInternalErrorException: The topic '{self.arn}' already exists. Skipping...")
+                print_yellow(f"\tThe topic '{self.arn}' already exists. Skipping...")
             else:
                 raise error
 
@@ -51,7 +51,7 @@ class SnsTopic:
             response = self.client.delete_topic(TopicArn=self.arn)
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'InvalidParameter':
-                print_yellow(f"\tInvalidParameterException: The topic '{self.arn}' does not exist so we don't need to delete it. Skipping...")
+                print_yellow(f"\tThe topic '{self.arn}' does not exist so we don't need to delete it. Skipping...")
             else:
                 raise error
 

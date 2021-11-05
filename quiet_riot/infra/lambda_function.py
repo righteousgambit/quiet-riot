@@ -57,7 +57,7 @@ class LambdaFunction:
                 return role_arn
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == 'EntityAlreadyExists':
-                    print_yellow(f"\tIAM Role {self.role_name} already exists")
+                    print_yellow(f"\tThe role {self.role_name} already exists")
                 else:
                     print("Unexpected error: %s" % e)
                 return f"arn:aws:iam::{self.account_id}:role/{self.role_name}"
@@ -92,7 +92,7 @@ class LambdaFunction:
             time.sleep(2)
             self.create()
         except self.client.exceptions.ResourceConflictException as error:
-            print_yellow(f"\tThe Function already exists. Skipping. Error message: {error}")
+            print_yellow(f"\tThe function already exists. Skipping...")
             pass
 
     def list(self) -> list:
@@ -117,7 +117,7 @@ class LambdaFunction:
             )
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'ResourceNotFoundException':
-                print_yellow(f"\tResourceNotFoundException: The function '{self.arn}' does not exist so we don't need to delete it. Skipping...")
+                print_yellow(f"\tThe function '{self.arn}' does not exist so we don't need to delete it. Skipping...")
             else:
                 raise error
         # Then delete the IAM Role

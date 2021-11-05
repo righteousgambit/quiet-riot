@@ -5,6 +5,7 @@ import datetime
 import threading
 import glob
 import os
+from quiet_riot.shared.utils import print_blue, print_red, print_yellow
 
 
 class ThreadManager:
@@ -17,11 +18,11 @@ class ThreadManager:
     def get_chunked_wordlist(self):
         """Function to get a wordlist and ask how many threads, then split the wordlist into sub-wordlists of the
         appropriate size to generate the number of threads desired (approx) when passed to the threader function"""
-        print('')
-        print('Approximately how many threads do you think you want to run?')
-        print('')
-        print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.')
-        print('')
+        # print('')
+        # print('Approximately how many threads do you think you want to run?')
+        # print('')
+        # print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.')
+        # print('')
 
         list_size = int(len(self.wordlist) / int(self.thread_count))
         if list_size >= 1:
@@ -30,17 +31,16 @@ class ThreadManager:
         else:
             list_size = 1
         # Calculate estimated completion time based on 700 attempts/sec the 1100 attempts/sec
-        low_speed = (int(len(self.wordlist)) / 700) / 60
-        high_speed = (int(len(self.wordlist)) / 1100) / 60
-        print('')
-        print("Estimated Scan Duration: " + str(int(high_speed)) + " minutes to " + str(int(low_speed)) + " minutes")
+        slow_speed = (int(len(self.wordlist)) / 700) / 60
+        fast_speed = (int(len(self.wordlist)) / 1100) / 60
+        print_blue(f"Estimated Scan Duration: {str(int(fast_speed))}-{str(int(slow_speed))} minutes")
+
         # Based on the number of desired threads and the overall # of words in the wordlist provided, chunk the wordlist into smaller wordlists and then make a list of lists that can be passed in threader to services
         chunks = [self.wordlist[x:x + list_size] for x in range(0, len(self.wordlist), list_size)]
         new_list = []
         for list in chunks:
             new_list.append(list)
-        print('')
-        print('Scanning Started with Quiet Riot')
+        print_red('Scanning Started with Quiet Riot')
         return new_list
 
     def checker(self, *wordlist):
@@ -77,8 +77,7 @@ class ThreadManager:
         threads = []
         new_list = []
 
-        print('')
-        print('Identified Valid Principals:')
+        # print('Identified Valid Principals:')
         ct1 = datetime.datetime.now()
         ts1 = ct1.timestamp()
         chunked_wordlist = self.get_chunked_wordlist()
@@ -101,14 +100,12 @@ class ThreadManager:
         ts2 = ct2.timestamp()
         if print_statistics:
             # Provide basic stats on scan performance.
-            print('')
-            print('Scan Summary: ')
-            print('# of Identified Valid Principals: ' + str(len(flat_list)))
-            print('# of Minutes Elapsed: ' + str(int(ts2 - ts1) / 60))
-            print("# of Threads Utilized: " + str(len(threads)))
-            print('')
+            print_blue("\nScan Summary: ")
+            print(f"\tIdentified Valid Principals: {str(len(flat_list))}")
+            print(f"\tMinutes Elapsed: {str(int(ts2 - ts1) / 60)}")
+            print(f"\tThreads Utilized: {str(len(threads))}")
 
-        print('Scan results can be found in the results sub-directory, if any valid_scan_results were identified.')
+        # print('Scan results can be found in the results sub-directory, if any valid_scan_results were identified.')
         # If the id_generator was used to create words.txt, you'll want to clean that up, so we do.
         fileList = glob.glob("words-*")
         for filePath in fileList:
