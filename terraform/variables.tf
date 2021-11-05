@@ -93,3 +93,12 @@ variable "excluded_aws_service_names" {
     "trustedadvisor.amazonaws.com",
   ]
 }
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Well known roles
+# ---------------------------------------------------------------------------------------------------------------------
+variable "well_known_role_names" {
+  description = "List of well known role names to create"
+  type        = list(string)
+  default     = []
+}

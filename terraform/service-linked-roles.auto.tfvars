@@ -127,8 +127,8 @@ excluded_aws_service_names = [
   "trustedadvisor.amazonaws.com",
 
   # Added these
-  "ec2.amazonaws.com", # AWSServiceRoleForNetworkManager
+  "ec2.amazonaws.com",        # AWSServiceRoleForNetworkManager
   "directconnect.amazon.com", # AWSServiceRoleForNetworkManager
-  "dms.amazonaws.com", # AWSServiceRoleForMigrationHubDMSAccess
+  "dms.amazonaws.com",        # AWSServiceRoleForMigrationHubDMSAccess
 
 ]
