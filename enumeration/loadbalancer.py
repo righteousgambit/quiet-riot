@@ -18,7 +18,7 @@ def getter(wordlist):
     print('')
     print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.')
     print('')
-    threads = input('# of threads: ')
+    threads = 700 #input('# of threads: ')
     with open(wordlist) as file:
         my_list = [x.rstrip() for x in file]
     list_size = int(len(my_list)/int(threads))
@@ -79,6 +79,7 @@ def threader(words):
     ct1 = datetime.datetime.now()
     ts1 = ct1.timestamp()
     # For each list in the list of lists - trigger the "load balanced" principal checker
+    length_check = [item for sublist in words for item in sublist]
     for list in words:
         x = threading.Thread(target=balancedchecker, args=(list))
         x.start()
@@ -99,6 +100,9 @@ def threader(words):
     print('')
     print('Scan Summary: ')
     print('# of Identified Valid Principals: '+str(len(flat_list)))
+    print('# of Scanned Principals: '+ str(len(length_check)))
+    percent = len(flat_list)/len(length_check)*100
+    print('% Valid Principals: ' + str(percent) + '%')
     print('# of Minutes Elapsed: '+str(int(ts2-ts1)/60))
     print("# of Threads Utilized: "+str(len(threads)))
     print('')

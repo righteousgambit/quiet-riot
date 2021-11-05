@@ -6,7 +6,7 @@ import settings
 
 myconfig = Config(
     retries = dict(
-        max_attempts = 7
+        max_attempts = 10
     )
 )
 

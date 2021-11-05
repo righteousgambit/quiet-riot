@@ -12,7 +12,7 @@ with open(wordlist_file) as file:
     my_list = [x.rstrip() for x in file]
     for account_no in account_list:   
         for item in my_list:
-            new_list.append('arn:aws:iam::'+account_no+':role/'+item)
+            new_list.append('arn:aws:iam::'+account_no+':'+item)
 
 
 with open(output_list, 'a+') as f:

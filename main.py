@@ -196,15 +196,7 @@ s3.create_bucket(
     Bucket=s3_bucket
 )
 
-#Create IAM role to scan against for SAML and OIDC providers.
-# iam_role = f'quiet-riot-role-{uuid.uuid4().hex}'
-# iam.create_role(
-#     RoleName='string',
-#     AssumeRolePolicyDocument='string'
-# )
-
 canonical_id = s3.list_buckets()['Owner']['ID']
-
 # Generate list from created resource names
 settings.init()
 settings.scan_objects.append(ecr_public_repo) 
