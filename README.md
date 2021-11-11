@@ -1,7 +1,7 @@
 # Quiet Riot 
 ### :notes: *C'mon, Feel The Noise* :notes:
   
-_An enumeration tool for scalable, unauthenticated validation of AWS principals; including AWS Acccount IDs, root e-mail addresses, users, and roles._
+_Unauthenticated enumeration of services, roles, and users in an AWS account or in every AWS account in existence._
 
 __Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 

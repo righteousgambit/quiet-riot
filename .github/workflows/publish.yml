@@ -1,0 +1,122 @@
+name: Publish
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.7']
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: make setup-dev
+
+      - name: Run bandit (security test)
+        run: make security-test
+
+      - name: Run pytest (unit tests)
+        run: make test
+
+      - name: Validate Terraform output
+        run: make terraform-validate
+
+      - name: Install the package to make sure nothing is randomly broken
+        run: make install
+
+  publish-package:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: create python package
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git fetch --tags
+          git pull origin main
+          pip install setuptools wheel twine
+          python -m setup sdist bdist_wheel
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_PASSWORD }}
+
+  update-brew:
+    needs: publish-package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: publish brew
+        run: |
+          sleep 5m
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          pip install homebrew-pypi-poet
+          pip install quiet-riot -U
+          git fetch origin
+          git checkout --track origin/main
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "latest tag: $latest_tag"
+          git pull origin $latest_tag
+          mkdir -p "HomebrewFormula" && touch "HomebrewFormula/quiet-riot.rb"
+          poet -f quiet-riot > HomebrewFormula/quiet-riot.rb
+          git add .
+          git commit -m "update brew formula" quiet_riot/bin/cli.py HomebrewFormula/quiet-riot.rb || echo "No brew changes to commit"
+          git push -u origin main
+
+  bump-version:
+    needs: update-brew
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+          submodules: recursive
+
+      - name: Bump version
+        run: |
+          version_file="quiet_riot/bin/version.py"
+
+          # https://github.com/bridgecrewio/checkov/blob/master/.github/workflows/build.yml#L87-L132
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git fetch --tags
+          git pull origin main
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "latest tag: $latest_tag"
+          new_tag=$(echo $latest_tag | awk -F. -v a="$1" -v b="$2" -v c="$3" '{printf("%d.%d.%d", $1+a, $2+b , $3+1)}')
+          echo "new tag: $new_tag"
+
+          printf "# pylint: disable=missing-module-docstring\n__version__ = '$new_tag'""" > $version_file
+
+          git commit -m "Bump to ${new_tag}"  $version_file || echo "No changes to commit"
+          git push origin

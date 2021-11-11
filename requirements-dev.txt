@@ -1,0 +1,9 @@
+# Testing
+pytest==6.2.5
+coverage==6.1.1
+
+# Security tests
+bandit==1.7.0
+
+# Formatting
+black==20.8b1
