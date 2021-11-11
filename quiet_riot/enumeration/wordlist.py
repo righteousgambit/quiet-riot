@@ -10,5 +10,4 @@ def get_rendered_wordlist(wordlist_principal_type: str, target_account_number: s
     for item in initial_wordlist:
         wordlist.add(f"arn:aws:iam::{target_account_number}:{wordlist_principal_type}/{item}")
     wordlist = list(wordlist)
-    wordlist.sort()
     return wordlist
