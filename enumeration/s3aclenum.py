@@ -1,41 +1,37 @@
 #!/usr/bin/env python3
 import boto3
+from botocore.exceptions import ClientError
 from botocore.config import Config
+import settings
 
 myconfig = Config(
     retries = dict(
-        max_attempts = 7
+        max_attempts = 10
     )
 )
 
-
-
 client = boto3.client('s3', config=myconfig)
-response = client.put_bucket_acl(
-    ACL='private'|'public-read'|'public-read-write'|'authenticated-read',
-    AccessControlPolicy={
-        'Grants': [
-            {
-                'Grantee': {
-                    'DisplayName': 'string',
-                    'EmailAddress': 'string',
-                    'ID': 'string',
-                    'Type': 'CanonicalUser'|'AmazonCustomerByEmail'|'Group',
-                    'URI': 'string'
-                },
-                'Permission': 'FULL_CONTROL'|'WRITE'|'WRITE_ACP'|'READ'|'READ_ACP'
+
+def s3_acl_princ_checker(rand_account_id):
+    try:
+        client.put_bucket_acl(
+            AccessControlPolicy={
+                'Grants': [
+                    {
+                        'Grantee': {
+                            'EmailAddress': rand_account_id,
+                            'Type': 'AmazonCustomerByEmail',
+                        },
+                        'Permission': 'READ'
+                    },
+                ],
+                'Owner': {
+                    'ID': settings.scan_objects[4]
+                }
             },
-        ],
-        'Owner': {
-            'DisplayName': 'string',
-            'ID': 'string'
-        }
-    },
-    Bucket='string',
-    GrantFullControl='string',
-    GrantRead='string',
-    GrantReadACP='string',
-    GrantWrite='string',
-    GrantWriteACP='string',
-    ExpectedBucketOwner='string'
-)
+            Bucket=settings.scan_objects[3],
+            ExpectedBucketOwner=settings.account_no
+    )
+        return 'Pass'
+    except BaseException as err:
+        pass

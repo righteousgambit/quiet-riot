@@ -47,12 +47,12 @@ def balancedchecker(*wordlist):
     # iterate over wordlist and allocate wordlist to enumeration service based on a random seed selected at time of function call
     rand_seed = rand.randint(0, 1000)
     for i in range(0, len(wordlist)):
-        if 0 <= rand_seed <= 549:
+        if 0 <= rand_seed <= 749:
             if ecrpubenum.ecr_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
-        elif 550 <= rand_seed <= 919:
+        elif 750 <= rand_seed <= 919:
             if snsenum.sns_princ_checker(wordlist[i]) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
@@ -79,6 +79,7 @@ def threader(words):
     ct1 = datetime.datetime.now()
     ts1 = ct1.timestamp()
     # For each list in the list of lists - trigger the "load balanced" principal checker
+    length_check = [item for sublist in words for item in sublist]
     for list in words:
         x = threading.Thread(target=balancedchecker, args=(list))
         x.start()
@@ -99,6 +100,9 @@ def threader(words):
     print('')
     print('Scan Summary: ')
     print('# of Identified Valid Principals: '+str(len(flat_list)))
+    print('# of Scanned Principals: '+ str(len(length_check)))
+    percent = len(flat_list)/len(length_check)*100
+    print('% Valid Principals: ' + str(percent) + '%')
     print('# of Minutes Elapsed: '+str(int(ts2-ts1)/60))
     print("# of Threads Utilized: "+str(len(threads)))
     print('')

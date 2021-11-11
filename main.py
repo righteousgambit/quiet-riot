@@ -9,6 +9,7 @@ from os import environ
 import glob
 import enumeration.loadbalancer as loadbalancer
 import enumeration.rand_id_generator as rand_id_generator
+import enumeration.s3aclenum as s3aclenum
 import enumeration.ecrprivenum
 import enumeration.ecrpubenum
 import enumeration.snsenum
@@ -46,6 +47,8 @@ ________        .__        __    __________.__        __
 
 sts = boto3.client('sts')
 #Create clients required for Quiet Riot Enumeration Infrastructure
+iam = boto3.client('iam', config = config)
+s3 = boto3.client('s3', config = config)
 sns = boto3.client('sns', config = config)
 ecrprivate = boto3.client('ecr', config = config)
 ecrpublic = boto3.client('ecr-public', config = config)
@@ -54,33 +57,40 @@ ecrpublic = boto3.client('ecr-public', config = config)
 
 #Requests user to provide required info to kick off scan
 def words_type():
-    wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts (account IDs), users, roles, or footprint (of an account)? '+"\033[0m").lower()
+    print(("\033[0;31m"+'What type of scan do you want to attempt? '+"\033[0m"))
+    print('1. accounts')
+    print('2. root account')
+    print('3. account footprint')
+    print('4. roles')
+    print('5. users')
+    print()
+    wordlist_type=input('Scan Type: ').lower()
     print('')
     while True:
-        if wordlist_type == 'accounts':
+        if wordlist_type == '1':
             return 'accounts', 'none'
-        elif wordlist_type == 'root account':
-            return 'root-account', 'none'
+        elif wordlist_type == '2':
+            return 'root account', 'none'
         elif wordlist_type == 'roles':
             account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'roles', account_no
-        elif wordlist_type == 'footprint':
+        elif wordlist_type == '3':
             account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'footprint', account_no
-        elif wordlist_type == 'users':
+        elif wordlist_type == '4':
+            account_no=input('Provide an Account ID to scan against: ')
+            print('')
+            return 'roles', account_no
+        elif wordlist_type == '5':
             account_no=input('Provide an Account ID to scan against: ')
             print('')
             return 'users', account_no
-        elif wordlist_type == 'groups':
-            account_no=input('Provide an Account ID to scan against: ')
-            print('')
-            return 'groups', account_no
         else:
             print('You did not enter a valid wordlist type.')
             print('')
-            wordlist_type=input("\033[0;31m"+'Wordlist is intended to be accounts, users, or roles? '+"\033[0m").lower()
+            wordlist_type=input("\033[0;31m"+'Enter a number between 1-5 '+"\033[0m").lower()
 
 #Creates final wordlist based on type of scanning to be performed.
 def words():
@@ -98,7 +108,7 @@ def words():
                 wordlist_file=input('Provide path to wordlist file: ')
             print('')
             with open(wordlist_file) as file:
-                my_list = [x.rstrip() for x in file]   
+                my_list = [x.rstrip() for x in file] 
                 if wordlist_type == 'roles':
                     for item in my_list:
                         new_list.append('arn:aws:iam::'+account_no+':role/'+item)
@@ -127,7 +137,7 @@ def words():
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
                     break
                 # TODO: Separate root accounts and setup s3 ACL check for root e-mail. Determine if root e-mail is only enumerable using s3 ACL
-                elif wordlist_type == 'accounts' or 'root account':
+                elif wordlist_type == 'accounts':
                     for item in my_list:
                         new_list.append(item)
                     with open(wordlist, 'a+') as f:
@@ -135,6 +145,19 @@ def words():
                             f.write("%s\n" % item)
                     # Configure user-defined wordlist as account IDs or root account e-mails for triggering via enumeration.loadbalancer.threader(getter())
                     loadbalancer.threader(loadbalancer.getter(wordlist=wordlist))
+                    break
+                elif wordlist_type == 'root account':
+                    valid_emails = []
+                    print('Indentified Root Account E-mail Addresses:')
+                    for i in my_list:
+                        if s3aclenum.s3_acl_princ_checker(i) == 'Pass':
+                            print(i)
+                            valid_emails.append(i)
+                        else:
+                            pass
+                    with open ('results/valid_scan_results.txt', 'a+') as f:
+                        for i in valid_emails:
+                            f.write("%s\n" % i)
                     break
                 else: 
                     print('Scan type provided is not valid.')
@@ -167,12 +190,20 @@ sns_topic = f'quiet-riot-sns-topic-{uuid.uuid4().hex}'
 sns.create_topic(
     Name=sns_topic
 )
+#Create s3 bucket to scan against for root account e-mail addresses.
+s3_bucket = f'quiet-riot-bucket-{uuid.uuid4().hex}'
+s3.create_bucket(
+    Bucket=s3_bucket
+)
 
-# Create list from created resource names
+canonical_id = s3.list_buckets()['Owner']['ID']
+# Generate list from created resource names
 settings.init()
 settings.scan_objects.append(ecr_public_repo) 
-settings.scan_objects.append(ecr_private_repo) 
+settings.scan_objects.append(ecr_private_repo)
 settings.scan_objects.append("arn:aws:sns:us-east-1:"+settings.account_no+":"+sns_topic)
+settings.scan_objects.append(s3_bucket)
+settings.scan_objects.append(canonical_id)
 
 # Call initial workflow that takes a user wordlist and starts a scan.
 words()
@@ -182,10 +213,18 @@ words()
 while True:
     print('')
     time.sleep(1)
-    prompt1= 'yes'# TODO: figure out why it can't take "no" - the threads never finish a second time through...think I need to clear the threads... input('Finished Scanning? Answer "yes" to delete your infrastructure: ').lower()
+    prompt1= 'yes'# TODO: figure out why it can't take "no" - the threads never finish a second time through...think I need to clear the threads... #input('Finished Scanning? Answer "yes" to delete your infrastructure: ').lower()
     time.sleep(1)
     #If user is finished with infrastructure, delete the created infrastructure
     if prompt1 == 'yes':
+        buckets = s3.list_buckets()
+        for i in range(0, len(buckets['Buckets'])):
+            if len(buckets['Buckets']) != 0:
+                if 'quiet-riot-bucket' in buckets['Buckets'][i]['Name']:
+                    print("Deleting Quiet Riot Infrastructure: " +buckets['Buckets'][i]['Name'])
+                    s3.delete_bucket(Bucket= buckets['Buckets'][i]['Name'])
+                else:
+                    pass
         #Delete ECR Public Repository - Resource that has IAM policy attachment
         public_repos = ecrpublic.describe_repositories()
         for i in range(0, len(public_repos['repositories'])):
