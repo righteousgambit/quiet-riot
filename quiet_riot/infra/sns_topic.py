@@ -5,6 +5,15 @@ from botocore import exceptions
 from quiet_riot.shared.utils import get_boto3_client, get_current_account_id, print_green, print_yellow
 logger = logging.getLogger(__name__)
 # SNS boto3 docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sns.html
+"""
+Service quotas for resource policy modification:
+* US-East-1: 3000/s
+* US-West-2: 900/s
+* EU-West-1: 900/s
+
+All other regions:
+* 150/s or less."
+"""
 
 
 class SnsTopic:

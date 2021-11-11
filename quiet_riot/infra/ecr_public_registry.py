@@ -6,7 +6,10 @@ from quiet_riot.shared.utils import get_boto3_client, get_current_account_id, pr
 logger = logging.getLogger(__name__)
 # ECR Public boto3 docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecr-public.html
 # ECR Private boto3 docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecr.html
-
+"""
+Service quotas for resource policy modification:
+* None stated
+"""
 
 class EcrPublicRegistry:
     def __init__(self, region: str, profile: str = None):

@@ -9,6 +9,10 @@ from botocore import exceptions
 from quiet_riot.shared.utils import get_boto3_client, get_current_account_id, print_green, print_yellow
 logger = logging.getLogger(__name__)
 # Lambda docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda.html
+"""
+Service Quota for resource policy modification:
+* All Regions: 15/s
+"""
 
 
 class LambdaFunction:

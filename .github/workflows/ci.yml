@@ -19,9 +19,9 @@ jobs:
 
       - name: Install dependencies
         run: make setup-dev
-
-      - name: Run bandit (security test)
-        run: make security-test
+#
+#       - name: Run bandit (security test)
+#         run: make security-test
 
       - name: Run pytest (unit tests)
         run: make test
