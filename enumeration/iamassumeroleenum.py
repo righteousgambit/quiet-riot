@@ -2,7 +2,8 @@
 import boto3
 import json
 
-client = boto3.client('iam')
+session = boto3.Session(profile_name='default')
+client = session.client('iam')
 
 
 def iam_assume_role_princ_checker(rand_account_id):

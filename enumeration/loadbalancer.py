@@ -1,24 +1,30 @@
 #!/usr/bin/env python3
 import random as rand
-import enumeration.ecrpubenum as ecrpubenum
-import enumeration.snsenum as snsenum
-import enumeration.ecrprivenum as ecrprivenum
+import sys
+import time
+from . import ecrpubenum
+from . import snsenum
+from . import ecrprivenum
 import os
 import threading
 import queue
 import datetime
-import settings
+from .. import settings
 from os.path import exists
 import glob
+from pathlib import Path
+
+
+timestamp = time.strftime("%Y%m%d-%H%M%S")
 
 # Function to get a wordlist and ask how many threads, then split the wordlist into sub-wordlists of the appropriate size to generate the number of threads desired (approx) when passed to the threader function
-def getter(wordlist):
-    print('')
-    print('Approximately how many threads do you think you want to run?')
-    print('')
-    print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.')
-    print('')
-    threads = input('# of threads: ')
+def getter(thread,wordlist):
+    # print('')
+    # print('Approximately how many threads do you think you want to run?')
+    # print('')
+    # print('Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.')
+    # print('')
+    threads = thread
     with open(wordlist) as file:
         my_list = [x.rstrip() for x in file]
     list_size = int(len(my_list)/int(threads))
@@ -40,25 +46,29 @@ def getter(wordlist):
     print('Scanning Started with Quiet Riot')
     return new_list
 
+
 # Function to server as a crude load balancer for the services we know can withstand a significant load.
 def balancedchecker(*wordlist):
+    global session1
+    session = session1
+
     #create empty list of valid principals identified by scanning
     valid_list = []
     # iterate over wordlist and allocate wordlist to enumeration service based on a random seed selected at time of function call
     rand_seed = rand.randint(0, 1000)
     for i in range(0, len(wordlist)):
         if 0 <= rand_seed <= 749:
-            if ecrpubenum.ecr_princ_checker(wordlist[i]) == 'Pass':
+            if ecrpubenum.ecr_princ_checker(wordlist[i],session) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
         elif 750 <= rand_seed <= 919:
-            if snsenum.sns_princ_checker(wordlist[i]) == 'Pass':
+            if snsenum.sns_princ_checker(wordlist[i],session) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
         elif 920 <= rand_seed <= 1000:
-            if ecrprivenum.ecr_princ_checker(wordlist[i]) == 'Pass':
+            if ecrprivenum.ecr_princ_checker(wordlist[i],session) == 'Pass':
                 valid_list.append(wordlist[i])
             else:
                 pass
@@ -73,7 +83,12 @@ def balancedchecker(*wordlist):
 threads = []
 new_list = []
 q = queue.Queue()
-def threader(words):
+def threader(words,session):
+
+    global session1
+    session1 = session
+    # print(words)
+    # print(session)
     print('')
     print('Identified Valid Principals:')
     ct1 = datetime.datetime.now()
@@ -91,9 +106,14 @@ def threader(words):
     # Flatten the new list
     flat_list = [item for sublist in new_list for item in sublist]
     # Write the results to valid_scan_results.txt in the results/ folder
-    with open ('results/valid_scan_results.txt', 'a+') as file:
+    results_file = f'valid_scan_results-{timestamp}.txt'
+    with open (results_file, 'a+') as file:
         for i in flat_list:
             file.write(str(i)+'\n')
+
+    file.close()
+
+
     ct2 = datetime.datetime.now()
     ts2 = ct2.timestamp()
     # Provide basic stats on scan performance.
@@ -106,11 +126,16 @@ def threader(words):
     print('# of Minutes Elapsed: '+str(int(ts2-ts1)/60))
     print("# of Threads Utilized: "+str(len(threads)))
     print('')
-    print('Scan results can be found in the results sub-directory, if any valid_scan_results were identified.')
     # If the id_generator was used to create words.txt, you'll want to clean that up, so we do.
-    fileList=glob.glob("words-*")
+    fileList=glob.glob("words-**")
     for filePath in fileList:
         try:
-            os.remove(filePath)
-        except:
-            print("Error while deleting file: ", filePath)
+            main_path = os.getcwd()
+            filePath_two = os.path.join(os.getcwd(),filePath)
+            # print(filePath_two)
+            os.remove(filePath_two)
+            # sys.path.append(main_path)
+        except Exception as f:
+            print(f)
+            print("Error while deleting file: ", filePath_two)
+    return results_file

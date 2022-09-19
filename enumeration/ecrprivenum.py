@@ -4,17 +4,19 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 from botocore.config import Config
-import settings
+from .. import settings
+# #
+# config = Config(
+#     retries = dict(
+#         max_attempts = 10
+#     )
+# )
+# client = boto3.client('ecr', config=config)
 
-config = Config(
-    retries = dict(
-        max_attempts = 10
-    )
-)
 
-client = boto3.client('ecr', config = config)
+def ecr_princ_checker(rand_account_id,session):
+    client = session.client('ecr')
 
-def ecr_princ_checker(rand_account_id):
     my_managed_policy ={
         "Version":"2012-10-17",
         "Statement":[

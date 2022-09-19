@@ -5,7 +5,8 @@ import boto3
 from botocore.exceptions import ClientError
 import uuid
 
-client = boto3.client('lambda')
+session = boto3.Session(profile_name='default')
+client = session.client('lambda')
 
 def lambda_princ_checker(rand_account_id):
     # Implement object to take my_managed_policy and parse for the generated account ID - then send that as return, not the fully policy

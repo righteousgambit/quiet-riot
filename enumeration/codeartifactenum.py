@@ -3,7 +3,8 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 
-client = boto3.client('codeartifact')
+session = boto3.Session(profile_name='default')
+client = session.client('codeartifact')
 
 def codeartifact_princ_checker(rand_account_id):
     my_managed_policy ={
