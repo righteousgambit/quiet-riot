@@ -2,7 +2,7 @@
 import random as rand
 
 def rand_id_generator():
-    list_size = int(input("How large of a list should we create? "))
+    list_size = int(input("How many potential account IDs would you like to scan?"))
     rand_seed = rand.randint(1,10)
     wordlist = f'words-{rand_seed}.txt'
     with open (wordlist, 'a+') as file:

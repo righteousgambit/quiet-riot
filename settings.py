@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import boto3
 
-sts = boto3.client('sts')
-
-def init():
+def init(session):
+    sts = session.client('sts')
     global scan_objects
     scan_objects = []
     global account_no

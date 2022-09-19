@@ -5,6 +5,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 # Establish boto3 sns session
+session = boto3.Session(profile_name='default')
 client = boto3.client('s3')
 
 def s3_princ_checker(rand_account_id):

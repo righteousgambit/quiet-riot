@@ -65,3 +65,51 @@ Otherwise, you will want to use your own wordlist as a dictionary to guess User 
 boto3/botocore  
 Sufficient AWS credentials configured via CLI
 
+## Command Line Arguments
+
+### Installation:
+
+First step to add Sufficient AWS credentials configured via CLI
+
+Create the virtual environment, or you can directly install the quiet_riot pkg using pip.
+
+For Installing this package you can run the command pip install quiet-riot. After installing the package you can run the command quiet_riot --help
+
+
+### Usage:
+
+Arguments for quiet_riot are --scan_type, --threads, --wordlist, --profile
+
+You can provide values for arguments required to run this package. Must require argument is scan_type.
+
+for e.g quiet_riot --scan_type 3 --threads 30 --wordlist D:\path_to_wordlist_file --profile Default
+
+Or you can use the short form for arguments as well like --s, --t, --w, --p
+
+--scan_type, --s      
+
+What type of scan do you want to attempt? Enter the type of scan for example
+
+         1. Account IDs
+         2. Root Account E-mail Addresses
+         3. Service Footprint
+         4. IAM Principals
+            4.1. IAM Roles
+            4.2. IAM Users
+            
+
+--threads, --t
+
+For number of threads you have to provide the number for e.g 23 , 30 90 etc. Approximately how many threads do you think you want to run? 
+
+Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.
+
+--wordlist, --w
+
+Path to the world list file which will be required for scan. 
+
+--profile, --p  
+
+Provide the name of aws profile configured through cli for e.g Default,Dev
+
+

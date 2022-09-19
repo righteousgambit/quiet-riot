@@ -2,17 +2,17 @@
 import boto3
 from botocore.exceptions import ClientError
 from botocore.config import Config
-import settings
+from .. import settings
 
-myconfig = Config(
-    retries = dict(
-        max_attempts = 10
-    )
-)
+# myconfig = Config(
+#     retries = dict(
+#         max_attempts = 10
+#     )
+# )
+# client = boto3.client('s3')
 
-client = boto3.client('s3', config=myconfig)
-
-def s3_acl_princ_checker(rand_account_id):
+def s3_acl_princ_checker(rand_account_id,session):
+    client = session.client('s3')
     try:
         client.put_bucket_acl(
             AccessControlPolicy={
@@ -34,4 +34,5 @@ def s3_acl_princ_checker(rand_account_id):
     )
         return 'Pass'
     except BaseException as err:
+        print(err)
         pass

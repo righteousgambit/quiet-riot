@@ -5,20 +5,21 @@ import boto3
 from botocore.exceptions import ClientError
 import datetime
 from botocore.config import Config
-import settings
-
-config = Config(
-    retries = dict(
-        max_attempts = 10
-    )
-)
-
-# Establish boto3 sns session
-client = boto3.client('sns', config = config)
+from .. import settings
+# #
+# config = Config(
+#     retries = dict(
+#         max_attempts = 10
+#     )
+# )
+#
+# # Establish boto3 sns session
+# client = boto3.client('sns', config=config)
 
 valid_list = []
 
-def sns_princ_checker(rand_account_id):
+def sns_princ_checker(rand_account_id,session):
+    client = session.client('sns')
     my_managed_policy = {
       "Statement": [{
         "Sid": "grant-1234-publish",
