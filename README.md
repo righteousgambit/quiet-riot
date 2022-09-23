@@ -5,8 +5,8 @@ _An enumeration tool for scalable, unauthenticated validation of AWS principals;
 
 __Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 
-See the introductory blog post [here](https://blog.traingrc.com/introducing-quiet-riot-c595cfa629e)
-See a defender's perspective blog post [here](https://blog.traingrc.com/quiet-riot-a-defenders-perspective-5c569185effc)
+See the introductory blog post [here](https://blog.traingrc.com/en/introducing-quiet-riot)
+See a defender's perspective blog post [here](https://blog.traingrc.com/en/quiet-riot-defenders-lens)
 
 ### Featureploitation Limits
 #### Throttling
