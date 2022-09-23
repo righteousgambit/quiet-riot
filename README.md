@@ -8,6 +8,66 @@ __Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying t
 See the introductory blog post [here](https://blog.traingrc.com/en/introducing-quiet-riot)
 See a defender's perspective blog post [here](https://blog.traingrc.com/en/quiet-riot-defenders-lens)
 
+## Getting Started With Quiet Riot
+To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts. 
+
+If you want to footprint the services in-use (or previously in use) for a specific account, select footprint. It will automatically leverage a wordlist composed of service-linked roles that indicate a particular service is or has been in use in an account.
+
+If you want to help identify valid Account IDs, you can select accounts and it will automatically generate a wordlist of random Account IDs of arbitrary (user-selected) size. Please consider making a pull request against the repository to include newly identified valid account IDs under wordlists/known_valid_account_ids.txt. I have collected <100k Account IDs and estimate there are between 50-60m Account IDs based on random sampling analysis.  
+  
+Otherwise, you will want to use your own wordlist as a dictionary to guess User names or Role names for a specific account. If you don't bring your own wordlists, I recommend starting with [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
+
+### Prerequisites
+boto3/botocore  
+Sufficient AWS credentials configured via CLI
+
+## Command Line Arguments
+
+### Installation:
+
+First step is to have sufficient AWS credentials configured via CLI. If you do not have your own AWS acccount or sufficient credentials in an AWS account, Quiet Riot will not work.
+
+Create the virtual environment, or you can directly install the quiet_riot pkg using pip.
+
+For installing this package you can run the command pip install quiet-riot. After installing the package you can run the command quiet_riot --help
+
+
+### Usage:
+
+Arguments for quiet_riot are --scan_type, --threads, --wordlist, --profile
+
+You can provide values for arguments required to run this package. Must require argument is scan_type.
+
+for e.g quiet_riot --scan_type 3 --threads 30 --wordlist D:\path_to_wordlist_file --profile Default
+
+Or you can use the short form for arguments as well like --s, --t, --w, --p
+
+--scan_type, --s      
+
+What type of scan do you want to attempt? Enter the type of scan for example
+
+         1. Account IDs
+         2. Root Account E-mail Addresses
+         3. Service Footprint
+         4. IAM Principals
+            4.1. IAM Roles
+            4.2. IAM Users
+            
+
+--threads, --t
+
+For number of threads you have to provide the number for e.g 23 , 30 90 etc. Approximately how many threads do you think you want to run? 
+
+Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.
+
+--wordlist, --w
+
+Path to the world list file which will be required for scan. 
+
+--profile, --p  
+
+Provide the name of aws profile configured through cli for e.g Default,Dev
+
 ### Featureploitation Limits
 #### Throttling
 After performing extensive analysis of scaling methods using the AWS Python (Boto3) SDK, I was able to determine that the bottleneck for scanning (at least for Python and awscli -based tools) is I/O capacity of a single-threaded Python application. After modifying the program to run with multiple threads, I was able to trigger exceptions in individual threads due to throttling by the various AWS APIs. You can see the results from running a few benchmarking test scans [here](./results/scan-run-statistics.txt). APIs that I tested had wildly different throttling limits and notably, s3 bucket policy attempts took ~10x as long as similar attempts against other services.
@@ -51,65 +111,4 @@ To attempt every possible Account ID in AWS (1,000,000,000,000) would require an
 | 26 | __Serverless Application Repository__ | Managed Source Code Repository | Unknown | Unknown | No |
 | 27 | __SQS__ | Managed Serverless Queueing Service | Unknown | Unknown | No |
 | 28 | __EFS__ | Managed Serverless Elastic File System | Unknown | Unknown | No |
-
-## Getting Started With Quiet Riot
-To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts. 
-
-If you want to footprint the services in-use (or previously in use) for a specific account, select footprint. It will automatically leverage a wordlist composed of service-linked roles that indicate a particular service is or has been in use in an account.
-
-If you want to help identify valid Account IDs, you can select accounts and it will automatically generate a wordlist of random Account IDs of arbitrary (user-selected) size. Please consider making a pull request against the repository to include newly identified valid account IDs under wordlists/known_valid_account_ids.txt. I have collected <100k Account IDs and estimate there are between 50-60m Account IDs based on random sampling analysis.  
-  
-Otherwise, you will want to use your own wordlist as a dictionary to guess User names or Role names for a specific account. If you don't bring your own wordlists, I recommend starting with [SecLists Usernames](https://github.com/danielmiessler/SecLists/tree/master/Usernames).
-
-### Prerequisites
-boto3/botocore  
-Sufficient AWS credentials configured via CLI
-
-## Command Line Arguments
-
-### Installation:
-
-First step to add Sufficient AWS credentials configured via CLI
-
-Create the virtual environment, or you can directly install the quiet_riot pkg using pip.
-
-For Installing this package you can run the command pip install quiet-riot. After installing the package you can run the command quiet_riot --help
-
-
-### Usage:
-
-Arguments for quiet_riot are --scan_type, --threads, --wordlist, --profile
-
-You can provide values for arguments required to run this package. Must require argument is scan_type.
-
-for e.g quiet_riot --scan_type 3 --threads 30 --wordlist D:\path_to_wordlist_file --profile Default
-
-Or you can use the short form for arguments as well like --s, --t, --w, --p
-
---scan_type, --s      
-
-What type of scan do you want to attempt? Enter the type of scan for example
-
-         1. Account IDs
-         2. Root Account E-mail Addresses
-         3. Service Footprint
-         4. IAM Principals
-            4.1. IAM Roles
-            4.2. IAM Users
-            
-
---threads, --t
-
-For number of threads you have to provide the number for e.g 23 , 30 90 etc. Approximately how many threads do you think you want to run? 
-
-Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.
-
---wordlist, --w
-
-Path to the world list file which will be required for scan. 
-
---profile, --p  
-
-Provide the name of aws profile configured through cli for e.g Default,Dev
-
 
