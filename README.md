@@ -5,8 +5,8 @@ _An enumeration tool for scalable, unauthenticated validation of AWS principals;
 
 __Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 
-See the introductory blog post [here](https://blog.traingrc.com/en/introducing-quiet-riot)
-See a defender's perspective blog post [here](https://blog.traingrc.com/en/quiet-riot-defenders-lens)
+See the introductory blog post [here](https://blog.traingrc.com/en/introducing-quiet-riot).  
+See a defender's perspective blog post [here](https://blog.traingrc.com/en/quiet-riot-defenders-lens).  
 
 ## Getting Started With Quiet Riot
 To get started with Quiet Riot, clone the repository to your local directory. You'll need boto3 and AWS cli tools installed. You'll need credentials configured with sufficient privileges in an AWS account to deploy the resources (SNS topic, ECR-Public repository, and ECR-Private repository). Then you just run ./main.py and follow the prompts. 
