@@ -34,5 +34,4 @@ def s3_acl_princ_checker(rand_account_id,session):
     )
         return 'Pass'
     except BaseException as err:
-        print(err)
         pass

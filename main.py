@@ -67,6 +67,16 @@ def words(input_args, wordlist_type, session):
                 wordlist_file = response
             elif wordlist_type == 'footprint':
                 wordlist_file = os.path.dirname(__file__) + '/wordlists/service-linked-roles.txt'
+            elif wordlist_type == 'root account':
+                fileList = glob.glob("final_**")
+                for filePath in fileList:
+                    try:
+                        main_path = os.getcwd()
+                        wordlist_file = os.path.join(os.getcwd(), filePath)
+                    except Exception as f:
+                        print(f)
+                        print("Error while deleting file: ", wordlist_file)
+
             else:
                 if str(input_args.wordlist) == '':
                     wordlist_file = input("Provide the path to wordlist file : ")
@@ -126,13 +136,23 @@ def words(input_args, wordlist_type, session):
                     break
                 elif wordlist_type == 'root account':
                     valid_emails = []
+                    print('')
+                    print("Chcecking Emails for root account........")
+                    print('')
+                    print("Wait for the scaning process to complete it may take some time...............")
+                    print('')
                     print('Indentified Root Account E-mail Addresses:')
+                    print("................")
                     for i in my_list:
                         if s3aclenum.s3_acl_princ_checker(i, session) == 'Pass':
+                            print(str(i) + " is a root account")
+                            print("")
                             print(i)
                             valid_emails.append(i)
                         else:
                             pass
+                    print("")
+                    print("-----------Scaning Completed----------")
                     results_file = f'valid_scan_results-{timestamp}.txt'
                     with open(results_file, 'a+') as f:
                         for i in valid_emails:
@@ -222,6 +242,130 @@ def main():
 
     wordlist_type = str(input_args.scan)
 
+    def email_creation():
+
+        family_names = os.path.dirname(__file__) + '/wordlists/familynames-usa-top1000.txt'
+
+        female_name = os.path.dirname(__file__) + '/wordlists/femalenames-usa-top1000.txt'
+
+        male_name = os.path.dirname(__file__) + '/wordlists/malenames-usa-top1000.txt'
+
+        def email_type(email_type_text):
+            while True:
+
+                if str(email_type_text) == '1':
+                    return 'first_type'
+                elif str(email_type_text) == '2':
+                    return 'second_type'
+                elif str(email_type_text) == '3':
+                    return 'third_type'
+                elif str(email_type_text) == '4':
+                    return 'fourth_type'
+                elif str(email_type_text) == '5':
+                    return 'fifth_type'
+
+                else:
+                    print('You did not enter a valid input.')
+                    print('')
+                    email_type_text = input("Enter a number between 1-5 : ").lower()
+                    print('')
+
+        print(
+            "Which e-mail format you want? Enter the number between (1-5)\n1. [first name]@traingrcacademy.onmicrosoft.com\n2. [first name][Last name]@traingrcacademy.onmicrosoft.com\n3. [first name].[last name]@traingrcacademy.onmicrosoft.com\n4. [last name]@traingrcacademy.onmicrosoft.com\n5. [first name]_[last name]@traingrcacademy.onmicrosoft.com")
+        email_type_text = input("Enter a number between 1-5 : ").lower()
+
+        email_option = email_type(email_type_text)
+
+        with open(family_names) as file:
+            family_names_list = [x.rstrip() for x in file]
+
+        with open(female_name) as file:
+            female_names_list = [x.rstrip() for x in file]
+
+        with open(male_name) as file:
+            male_names_list = [x.rstrip() for x in file]
+
+        combined_female_name = []
+        for fam_name in family_names_list:
+
+            for fe_name in female_names_list:
+                female_final_name = fe_name + " " + fam_name
+
+                combined_female_name.append(female_final_name)
+
+        female_file = 'combined_female_names.txt'
+        with open(female_file, 'w') as female_file:
+            for i in combined_female_name:
+                female_file.write(str(i) + '\n')
+
+        female_file.close()
+
+        combined_male_name = []
+        for fam_name in family_names_list:
+
+            for m_name in male_names_list:
+                male_final_name = m_name + " " + fam_name
+
+                combined_male_name.append(male_final_name)
+
+        male_file = 'combined_male_names.txt'
+        with open(male_file, 'w') as male_file:
+            for i in combined_male_name:
+                male_file.write(str(i) + '\n')
+
+        male_file.close()
+
+        random_final_names = combined_female_name + combined_male_name
+
+        final_file = 'names_quit_riot.txt'
+        with open(final_file, 'w') as final_file:
+            for i in random_final_names:
+                final_file.write(str(i) + '\n')
+
+        final_file.close()
+
+        email_list = []
+        print('')
+        print("Generating e-mails based on the format.........")
+        print('')
+
+        for name in random_final_names:
+
+            name = name.lower()
+            if str(email_option) == 'first_type':
+                email = name.split(" ")[0] + "@traingrcacademy.onmicrosoft.com"
+                email_list.append(email)
+
+            elif str(email_option) == 'second_type':
+
+                email = name.replace(" ", "") + "@traingrcacademy.onmicrosoft.com"
+                email_list.append(email)
+
+            elif str(email_option) == 'third_type':
+
+                email = name.replace(" ", ".") + "@traingrcacademy.onmicrosoft.com"
+                email_list.append(email)
+
+            elif str(email_option) == 'fourth_type':
+
+                email = name.split(" ")[1] + "@traingrcacademy.onmicrosoft.com"
+                email_list.append(email)
+
+            elif str(email_option) == 'fifth_type':
+
+                email = name.replace(" ", "_") + "@traingrcacademy.onmicrosoft.com"
+                email_list.append(email)
+
+        email_list_set = set(email_list)
+
+        email_set_list = (list(email_list_set))
+
+        final_email = 'final_emails.txt'
+        with open(final_email, 'w') as final_file:
+            for i in email_set_list:
+                final_file.write(str(i) + '\n')
+        print("Total Number of e-mails generated : " + str(len(email_set_list)))
+
     def sub_scan_type():
         print("")
         print("1. IAM Roles")
@@ -249,6 +393,9 @@ def main():
 
     if str(wordlist_type) == "4":
         wordlist_type = sub_scan_type()
+
+    if str(wordlist_type) == "2":
+        email_creation()
 
     # Create s3 bucket to scan against for root account e-mail addresses.
 
@@ -329,7 +476,7 @@ def main():
         )
 
         time.sleep(4)
-        
+
     try:
         result_file_path = os.path.join(os.getcwd(), results_file)
         s3.put_object(
