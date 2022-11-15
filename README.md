@@ -37,12 +37,13 @@ Or you can use the short form for arguments as well like --s, --t, --w, --p
 
 What type of scan do you want to attempt? Enter the type of scan for example
 
-         1. Account IDs
-         2. Root Account E-mail Addresses
-         3. Service Footprint
-         4. IAM Principals
-            4.1. IAM Roles
-            4.2. IAM Users
+             1. AWS Account IDs
+             2. Microsoft 365 Domains
+             3. AWS Root User E-mail Address
+             4. AWS IAM Principals
+                4.1. IAM Roles
+                4.2. IAM Users
+             5. Microsoft 365 Users
             
 
 --threads, --t

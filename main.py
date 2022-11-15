@@ -18,6 +18,8 @@ from .enumeration import snsenum
 from . import settings
 from botocore.config import Config
 from pathlib import Path
+import requests as o365request
+import re
 
 # Define ANSI escape sequence colors
 
@@ -29,31 +31,37 @@ def words_type(wordlist_type):
         if str(wordlist_type) == '1':
             return 'accounts', 'none'
         elif str(wordlist_type) == '2':
-            return 'root account', 'none'
+            return 'micro_domain', 'none'
         elif str(wordlist_type) == 'roles':
             account_no = input('Provide an Account ID to scan against: ')
             print('')
             return 'roles', str(account_no)
         elif str(wordlist_type) == '3':
-            account_no = input('Provide an Account ID to scan against: ')
-            print('')
-            return 'footprint', str(account_no)
+            return 'root account', 'none'
+        # elif str(wordlist_type) == '3':
+        #     account_no = input('Provide an Account ID to scan against: ')
+        #     print('')
+        #     return 'footprint', str(account_no)
         elif str(wordlist_type) == '4':
             account_no = input('Provide an Account ID to scan against: ')
             print('')
             return 'roles', str(account_no)
         elif str(wordlist_type) == '5':
+            print('')
+            return 'micro_users', 'none'
+        elif str(wordlist_type) == '6':
             account_no = input('Provide an Account ID to scan against: ')
             print('')
             return 'users', str(account_no)
         else:
             print('You did not enter a valid Scan type.')
             print('')
-            wordlist_type = input("\033[0;31m" + 'Enter a number between 1-5 ' + "\033[0m").lower()
+            wordlist_type = input("\033[0;31m" + 'Enter a number between 1-6 ' + "\033[0m").lower()
 
 
 # Creates final wordlist based on type of scanning to be performed.
-def words(input_args, wordlist_type, session):
+def words(input_args, wordlist_type, session,email_option,email_list_path,email_eight_type,domain_name,micro_single_email,micro_timeout,micro_location_email,micro_email_type_response,micro_domain_name):
+    ms_url = 'https://login.microsoftonline.com/common/GetCredentialType'
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     wordlist_type, account_no = words_type(wordlist_type)
     # print(wordlist_type)
@@ -65,17 +73,140 @@ def words(input_args, wordlist_type, session):
             if wordlist_type == 'accounts':
                 response = rand_id_generator.rand_id_generator()
                 wordlist_file = response
-            elif wordlist_type == 'footprint':
-                wordlist_file = os.path.dirname(__file__) + '/wordlists/service-linked-roles.txt'
-            elif wordlist_type == 'root account':
-                fileList = glob.glob("final_**")
-                for filePath in fileList:
-                    try:
-                        main_path = os.getcwd()
-                        wordlist_file = os.path.join(os.getcwd(), filePath)
-                    except Exception as f:
-                        print(f)
-                        print("Error while deleting file: ", wordlist_file)
+            # elif wordlist_type == 'footprint':
+            #     wordlist_file = os.path.dirname(__file__) + '/wordlists/service-linked-roles.txt'
+            elif wordlist_type == "micro_domain":
+                valid_domain = []
+                domain_name = micro_domain_name
+                print(f"[info] Checking if the {domain_name} exists...\n")
+                url = (
+                    f"https://login.microsoftonline.com/getuserrealm.srf?login=user@{domain_name}")
+                request = o365request.get(url)
+                # print(request)
+                response = request.text
+                # print(response)
+                valid_response = re.search('"NameSpaceType":"Managed",', response)
+                valid_response1 = re.search('"NameSpaceType":"Federated",', response)
+                # if args.verbose:
+                #     print(domain_name, request, response, valid_response)
+                if valid_response:
+                    print(f"[success] The listed domain {domain_name} exists. Domain is Managed.\n")
+                    valid_domain.append(micro_domain_name)
+                elif valid_response1:
+                    print(f"[success] The listed domain {domain_name} exists. Domain is Federated.\n")
+                    valid_domain.append(micro_domain_name)
+                else:
+                    print(f"[info] The listed domain {domain_name} does not exist.\n")
+                print('')
+                print("-----------Scaning Completed----------")
+                print('')
+                results_file = f'valid_scan_results-{timestamp}.txt'
+                with open(results_file, 'a+') as f:
+                    for i in valid_domain:
+                        f.write("%s\n" % i)
+
+                f.close()
+                return results_file
+
+            elif wordlist_type == 'root account' and email_option != 'seventh_type' and email_option != 'eighth_type':
+                try:
+                    wordlist_file = os.path.dirname(__file__) + '/wordlists/final_emails.txt'
+                except Exception as f:
+                    print(f)
+                    print("Error while reading file: ", wordlist_file)
+
+            elif wordlist_type == 'root account' and email_list_path != '' and email_option == 'seventh_type':
+                try:
+                    wordlist_file = email_list_path
+                except Exception as f:
+                    print(f)
+                    print("Error while reading file: ", wordlist_file)
+
+            #singel email handling
+            elif wordlist_type == 'root account' and email_option == 'eighth_type' and email_eight_type != '':
+                print('')
+                print("Scanning for Potential Root Users")
+                print('')
+                print('Identified Root Account E-mail Addresses:')
+                valid_emails = []
+                my_list = []
+                my_list.append(email_eight_type)
+
+                for i in my_list:
+                    if s3aclenum.s3_acl_princ_checker(i, session) == 'Pass':
+                        print(str(i) + " is a root account")
+                        print("")
+                        print(i)
+                        valid_emails.append(i)
+                    else:
+                        pass
+
+                print("")
+                print("-----------Scaning Completed----------")
+
+                results_file = f'valid_scan_results-{timestamp}.txt'
+                with open(results_file, 'a+') as f:
+                    for i in valid_emails:
+                        f.write("%s\n" % i)
+
+                f.close()
+                return results_file
+
+            elif wordlist_type == "micro_users" and micro_email_type_response == 'second_type':
+                micro_email_list = []
+                email = micro_single_email
+                s = o365request.session()
+                body = '{"Username":"%s"}' % email
+                request = o365request.post(ms_url, data=body)
+                response_dict = request.json()
+                response = request.text
+                valid_response = re.search('"IfExistsResult":0,', response)
+                valid_response5 = re.search('"IfExistsResult":5,', response)
+                valid_response6 = re.search('"IfExistsResult":6,', response)
+                invalid_response = re.search('"IfExistsResult":1,', response)
+                desktopsso_response = re.search(
+                    '{"DesktopSsoEnabled":true,"UserTenantBranding":null,"DomainType":3}', response)
+                throttling = re.search('"ThrottleStatus":1', response)
+                # if args.verbose:
+                #     print('\n', email, s, body, request, response_dict, response, valid_response,
+                #           valid_response5, valid_response6, invalid_response, desktopsso_response, '\n')
+                if desktopsso_response and not valid_response or valid_response5 or valid_response6:
+                    a = email
+                    b = " Result -  Desktop SSO Enabled [!]"
+                    print(f'[!] {a:51} {b} ')
+                    micro_email_list.append(a)
+                if invalid_response and not desktopsso_response:
+                    a = email
+                    b = " Result - Invalid Email Found! [-]"
+                    print( f"[-] {a:51} {b}")
+                if valid_response or valid_response5 or valid_response6:
+                    a = email
+                    b = " Result -   Valid Email Found! [+]"
+                    print(f"[+] {a:53} {b} ")
+                    micro_email_list.append(a)
+                if throttling:
+                    print("\nResults suggest O365 is responding with false positives. Retry the scan in 1 minute.")
+                    sys.exit()
+                if micro_timeout is not None:
+                    time.sleep(int(micro_timeout))
+                print('')
+                print("-----------Scaning Completed----------")
+                print('')
+                results_file = f'valid_scan_results-{timestamp}.txt'
+                with open(results_file, 'a+') as f:
+                    for i in micro_email_list:
+                        f.write("%s\n" % i)
+
+                f.close()
+                return results_file
+
+
+            elif wordlist_type == "micro_users" and micro_email_type_response == 'first_type':
+                try:
+                    wordlist_file = micro_location_email
+                except Exception as f:
+                    print(f)
+                    print("Error while reading file: ", wordlist_file)
 
             else:
                 if str(input_args.wordlist) == '':
@@ -99,17 +230,17 @@ def words(input_args, wordlist_type, session):
                     # print(results_file)
                     return results_file
                     break
-                elif wordlist_type == 'footprint':
-                    for item in my_list:
-                        new_list.append('arn:aws:iam::' + account_no + ':role/' + item)
-                    with open(wordlist, 'a+') as f:
-                        for item in new_list:
-                            f.write("%s\n" % item)
-                    # Configure user-defined wordlist as roles for triggering via enumeration.loadbalancer.threader(getter())
-                    results_file = loadbalancer.threader(
-                        loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
-                    return results_file
-                    break
+                # elif wordlist_type == 'footprint':
+                #     for item in my_list:
+                #         new_list.append('arn:aws:iam::' + account_no + ':role/' + item)
+                #     with open(wordlist, 'a+') as f:
+                #         for item in new_list:
+                #             f.write("%s\n" % item)
+                #     # Configure user-defined wordlist as roles for triggering via enumeration.loadbalancer.threader(getter())
+                #     results_file = loadbalancer.threader(
+                #         loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
+                #     return results_file
+                #     break
                 elif wordlist_type == 'users':
                     for item in my_list:
                         new_list.append('arn:aws:iam::' + account_no + ':user/' + item)
@@ -134,21 +265,19 @@ def words(input_args, wordlist_type, session):
                         loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
                     return results_file
                     break
-                elif wordlist_type == 'root account':
+                elif wordlist_type == 'root account' and email_option == 'seventh_type':
                     valid_emails = []
                     print('')
-                    print("Chcecking Emails for root account........")
+                    print("Scanning for Potential Root Users")
                     print('')
-                    print("Wait for the scaning process to complete it may take some time...............")
-                    print('')
-                    print('Indentified Root Account E-mail Addresses:')
-                    print("................")
-                    for i in my_list:
-                        if s3aclenum.s3_acl_princ_checker(i, session) == 'Pass':
-                            print(str(i) + " is a root account")
+                    print('Identified Root Account E-mail Addresses:')
+
+                    for username in my_list:
+                        email = username.replace(' ','').lower() + '@' + str(domain_name)
+                        if s3aclenum.s3_acl_princ_checker(str(email), session) == 'Pass':
+                            print(str(email) + " is a root account")
                             print("")
-                            print(i)
-                            valid_emails.append(i)
+                            valid_emails.append(email)
                         else:
                             pass
                     print("")
@@ -161,6 +290,157 @@ def words(input_args, wordlist_type, session):
                     f.close()
                     return results_file
                     break
+
+                elif wordlist_type == 'root account' and email_option != 'seventh_type' and email_option != 'eight_type':
+                    valid_emails = []
+                    print('')
+                    print("Scanning for Potential Root Users")
+                    print('')
+                    print('Identified Root Account E-mail Addresses:')
+
+                    for i in my_list:
+                        if s3aclenum.s3_acl_princ_checker(i, session) == 'Pass':
+                            print(str(i) + " is a root account")
+                            print("")
+                            print(i)
+                            valid_emails.append(i)
+                        else:
+                            pass
+                    print("")
+                    print("-----------Scaning Completed----------")
+                    print('')
+                    delete_files = input('Do you want to delete the wordlist to save space(yes/no)? ').lower()
+                    print('')
+                    while True:
+
+                        if delete_files == 'yes':
+                            try:
+
+                                comined_male_names = os.path.dirname(__file__) + '/wordlists/combined_male_names.txt'
+                                os.remove(comined_male_names)
+
+                            except Exception as com_male:
+                                print("Error in deleting Combined male names file")
+                                pass
+                            try:
+
+                                comined_female_names = os.path.dirname(__file__) + '/wordlists/combined_female_names.txt'
+                                os.remove(comined_female_names)
+
+                            except Exception as com_male:
+                                print("Error in deleting comined_female_names file")
+                                pass
+                            try:
+
+                                quiet_riot_names = os.path.dirname(__file__) + '/wordlists/names_quit_riot.txt'
+                                os.remove(quiet_riot_names)
+
+                            except Exception as com_male:
+                                print("Error in deleting quiet_riot_names file")
+                                pass
+                            try:
+
+                                comined_final_names = os.path.dirname(__file__) + '/wordlists/final_emails.txt'
+                                os.remove(comined_final_names)
+
+                            except Exception as com_male:
+                                print("Error in deleting comined_final_names file")
+                                pass
+                            break
+                        elif delete_files == 'no':
+                            break
+                        else:
+                            break
+                    results_file = f'valid_scan_results-{timestamp}.txt'
+                    with open(results_file, 'a+') as f:
+                        for i in valid_emails:
+                            f.write("%s\n" % i)
+
+                    f.close()
+                    return results_file
+                    break
+
+
+                elif wordlist_type == "micro_users" and micro_email_type_response == 'first_type':
+                    counter = 0
+                    timeout_counter = 0
+                    valid_emails = []
+                    for line in my_list:
+                        s = o365request.session()
+                        email_line = line.split()
+                        email = ' '.join(email_line)
+                        body = '{"Username":"%s"}' % email
+                        request = o365request.post(ms_url, data=body)
+                        response = request.text
+                        valid_response = re.search('"IfExistsResult":0,', response)
+                        valid_response5 = re.search('"IfExistsResult":5,', response)
+                        valid_response6 = re.search('"IfExistsResult":6,', response)
+                        invalid_response = re.search('"IfExistsResult":1,', response)
+                        throttling = re.search('"ThrottleStatus":1', response)
+                        desktopsso_response = re.search(
+                            '{"DesktopSsoEnabled":true,"UserTenantBranding":null,"DomainType":3}', response)
+                        # if args.verbose:
+                        #     print('\n', s, email_line, email, body, request, response, valid_response,
+                        #           valid_response5, valid_response6, invalid_response, desktopsso_response, '\n')
+                        if desktopsso_response:
+                            a = email
+                            b = " Result -  Desktop SSO Enabled [!]"
+                            print( f'[!] {a:51} {b} ')
+                            valid_emails.append(a)
+                        if invalid_response and not desktopsso_response:
+                            a = email
+                            b = " Result - Invalid Email Found! [-]"
+                            print(f"[-] {a:51} {b}" )
+                        if valid_response or valid_response5 or valid_response6:
+                            a = email
+                            b = " Result -   Valid Email Found! [+]"
+                            print(f"[+] {a:51} {b}")
+                            valid_emails.append(a)
+                            counter = counter + 1
+
+                        if throttling:
+                            if micro_timeout is not None:
+                                timeout_counter = timeout_counter + 1
+                                if timeout_counter == 5:
+                                    print(f'\n[warn] Results suggest O365 is responding with false positives.')
+                                    print(f'\n[warn] Office365 has returned five false positives.\n')
+                                    print(f'quiet_riot setting the wait time to 10 minutes. You can exit or allow the program to continue running.')
+                                    time.sleep(int(300))
+                                    print(f'\nScanning will continue in 5 minutes.')
+                                    time.sleep(int(270))
+                                    print(f'\nContinuing scan in 30 seconds.')
+                                    time.sleep(int(30))
+                                    timeout_counter = 0
+                                    # sys.exit()
+                                else:
+                                    print(f"\n[warn] Results suggest O365 is responding with false positives. Sleeping for {micro_timeout} seconds before trying again.\n")
+                                    time.sleep(int(micro_timeout))
+
+                            else:
+                                print("\n[warn] Results suggest O365 is responding with false positives. Restart scan and provide timeout to slow request times.")
+                                sys.exit()
+                        if micro_timeout is not None:
+                            time.sleep(int(micro_timeout))
+                    if counter == 0:
+                        print( '\nThere were no valid logins found.')
+                    elif counter == 1:
+                        print('\nQuiet Riot discovered one valid login account.')
+                    else:
+                        print(f'\nQuiet Riot discovered {counter} valid login accounts.\n')
+
+                    print('')
+                    print("-----------Scaning Completed----------")
+                    print('')
+
+                    results_file = f'valid_scan_results-{timestamp}.txt'
+                    with open(results_file, 'a+') as f:
+                        for i in valid_emails:
+                            f.write("%s\n" % i)
+
+                    f.close()
+                    return results_file
+
+
                 else:
                     print('Scan type provided is not valid.')
                     wordlist_type = input(
@@ -186,16 +466,17 @@ def main():
     # Create timestamp in preferred format for wordlist files
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,prog='quiet_riot' , usage=' %(prog)s [--help,--h help] [--scan,--s SCAN] [--threads,--t THREADS] [--wordlist,--w WORDLIST] [--profile,--p PROFILE]')
     parser.add_argument('--scan', '--s', required=True, type=int, default=1,
                         help=textwrap.dedent('''\
                         What type of scan do you want to attempt? Enter the type of scan for example
-                             1. Account IDs
-                             2. Root Account E-mail Addresses
-                             3. Service Footprint
-                             4. IAM Principals
+                             1. AWS Account IDs
+                             2. Microsoft 365 Domains
+                             3. AWS Root User E-mail Address
+                             4. AWS IAM Principals
                                 4.1. IAM Roles
                                 4.2. IAM Users
+                             5. Microsoft 365 Users
 
                              '''))
 
@@ -241,8 +522,53 @@ def main():
     ecrpublic = session.client('ecr-public')
 
     wordlist_type = str(input_args.scan)
+    micro_domain_name = ''
+    if wordlist_type == '2':
 
-    def email_creation():
+        print('')
+        micro_domain_name = input("Domain Name to check for O365:  ")
+        print('')
+        while True:
+
+            if micro_domain_name != '':
+                micro_domain_name = micro_domain_name
+                break
+
+            else:
+                print('')
+                micro_domain_name = input("Domain Name to check for O365:  ")
+                print('')
+    def email_type():
+
+        print(
+            "E-mail Format (First and Last Names):\na. [first]@[domain]\nb. [first][last]@[domain]\nc. [first].[last]@[domain]\nd. [last]@[domain]\ne. [first]_[last]@[domain]\nf. [first_initial][last]@[domain]\ng. custom username list\nh. input single e-mail address\n")
+        email_type_text = input("Enter an alphabet between a-h : ").lower()
+        while True:
+
+            if str(email_type_text) == 'a':
+                return 'first_type'
+            elif str(email_type_text) == 'b':
+                return 'second_type'
+            elif str(email_type_text) == 'c':
+                return 'third_type'
+            elif str(email_type_text) == 'd':
+                return 'fourth_type'
+            elif str(email_type_text) == 'e':
+                return 'fifth_type'
+            elif str(email_type_text) == 'f':
+                return 'sixth_type'
+            elif str(email_type_text) == 'g':
+                return 'seventh_type'
+            elif str(email_type_text) == 'h':
+                return 'eighth_type'
+
+            else:
+                print('You did not enter a valid input.')
+                print('')
+                email_type_text = input("Enter an alphabet between a-h : ").lower()
+                print('')
+
+    def email_creation(email_option):
 
         family_names = os.path.dirname(__file__) + '/wordlists/familynames-usa-top1000.txt'
 
@@ -250,31 +576,6 @@ def main():
 
         male_name = os.path.dirname(__file__) + '/wordlists/malenames-usa-top1000.txt'
 
-        def email_type(email_type_text):
-            while True:
-
-                if str(email_type_text) == '1':
-                    return 'first_type'
-                elif str(email_type_text) == '2':
-                    return 'second_type'
-                elif str(email_type_text) == '3':
-                    return 'third_type'
-                elif str(email_type_text) == '4':
-                    return 'fourth_type'
-                elif str(email_type_text) == '5':
-                    return 'fifth_type'
-
-                else:
-                    print('You did not enter a valid input.')
-                    print('')
-                    email_type_text = input("Enter a number between 1-5 : ").lower()
-                    print('')
-
-        print(
-            "Which e-mail format you want? Enter the number between (1-5)\n1. [first name]@traingrcacademy.onmicrosoft.com\n2. [first name][Last name]@traingrcacademy.onmicrosoft.com\n3. [first name].[last name]@traingrcacademy.onmicrosoft.com\n4. [last name]@traingrcacademy.onmicrosoft.com\n5. [first name]_[last name]@traingrcacademy.onmicrosoft.com")
-        email_type_text = input("Enter a number between 1-5 : ").lower()
-
-        email_option = email_type(email_type_text)
 
         with open(family_names) as file:
             family_names_list = [x.rstrip() for x in file]
@@ -293,7 +594,7 @@ def main():
 
                 combined_female_name.append(female_final_name)
 
-        female_file = 'combined_female_names.txt'
+        female_file = os.path.dirname(__file__) + '/wordlists/combined_female_names.txt'
         with open(female_file, 'w') as female_file:
             for i in combined_female_name:
                 female_file.write(str(i) + '\n')
@@ -308,7 +609,7 @@ def main():
 
                 combined_male_name.append(male_final_name)
 
-        male_file = 'combined_male_names.txt'
+        male_file = os.path.dirname(__file__) + '/wordlists/combined_male_names.txt'
         with open(male_file, 'w') as male_file:
             for i in combined_male_name:
                 male_file.write(str(i) + '\n')
@@ -317,7 +618,7 @@ def main():
 
         random_final_names = combined_female_name + combined_male_name
 
-        final_file = 'names_quit_riot.txt'
+        final_file = os.path.dirname(__file__) + '/wordlists/names_quit_riot.txt'
         with open(final_file, 'w') as final_file:
             for i in random_final_names:
                 final_file.write(str(i) + '\n')
@@ -326,46 +627,60 @@ def main():
 
         email_list = []
         print('')
-        print("Generating e-mails based on the format.........")
+        domain_name = input("Domain Name:  ")
         print('')
+
+        while True:
+
+            if domain_name != '':
+                domain_name = domain_name
+                break
+
+            else:
+                print('')
+                domain_name = input("Domain Name:  ")
+                print('')
 
         for name in random_final_names:
 
             name = name.lower()
             if str(email_option) == 'first_type':
-                email = name.split(" ")[0] + "@traingrcacademy.onmicrosoft.com"
+                email = name.split(" ")[0] + "@" + str(domain_name)
                 email_list.append(email)
 
             elif str(email_option) == 'second_type':
 
-                email = name.replace(" ", "") + "@traingrcacademy.onmicrosoft.com"
+                email = name.replace(" ", "") + "@" + str(domain_name)
                 email_list.append(email)
 
             elif str(email_option) == 'third_type':
 
-                email = name.replace(" ", ".") + "@traingrcacademy.onmicrosoft.com"
+                email = name.replace(" ", ".") + "@" + str(domain_name)
                 email_list.append(email)
 
             elif str(email_option) == 'fourth_type':
 
-                email = name.split(" ")[1] + "@traingrcacademy.onmicrosoft.com"
+                email = name.split(" ")[1] + "@" + str(domain_name)
                 email_list.append(email)
 
             elif str(email_option) == 'fifth_type':
 
-                email = name.replace(" ", "_") + "@traingrcacademy.onmicrosoft.com"
+                email = name.replace(" ", "_") + "@" + str(domain_name)
                 email_list.append(email)
 
+            elif str(email_option) == 'sixth_type':
+
+                email = str(name[0]) + name.split(" ")[1] + "@" + str(domain_name)
+                email_list.append(email)
         email_list_set = set(email_list)
 
         email_set_list = (list(email_list_set))
 
-        final_email = 'final_emails.txt'
+        final_email = os.path.dirname(__file__) + '/wordlists/final_emails.txt'
         with open(final_email, 'w') as final_file:
             for i in email_set_list:
                 final_file.write(str(i) + '\n')
-        print("Total Number of e-mails generated : " + str(len(email_set_list)))
-
+        print("Total Number of e-mail addresses generated: " + str(len(email_set_list)))
     def sub_scan_type():
         print("")
         print("1. IAM Roles")
@@ -381,7 +696,7 @@ def main():
                 return wordlist_type
 
             elif sub_iam_type == "2":
-                wordlist_type = "5"
+                wordlist_type = "6"
                 return wordlist_type
 
             else:
@@ -394,8 +709,121 @@ def main():
     if str(wordlist_type) == "4":
         wordlist_type = sub_scan_type()
 
-    if str(wordlist_type) == "2":
-        email_creation()
+    email_list_path = ''
+    email_eight_type = ''
+    domain_name = ''
+    email_option = ''
+    if str(wordlist_type) == "3":
+        email_option = email_type()
+        if str(email_option) == 'seventh_type':
+            print('')
+            email_list_path = input("Location to emails list file: ")
+            print('')
+            print('')
+            domain_name = input("Domain Name:  ")
+            print('')
+            while True:
+
+                if email_list_path != '':
+                    email_list_path = email_list_path
+                    break
+
+                else:
+                    print('')
+                    email_list_path = input("Location to emails list file: ")
+                    print('')
+
+            while True:
+
+                if domain_name != '':
+                    domain_name = domain_name
+                    break
+
+                else:
+                    print('')
+                    domain_name = input("Domain Name:  ")
+                    print('')
+
+        elif str(email_option) == 'eighth_type':
+            print('')
+            email_eight_type = input("Enter full e-mail address: ").lower()
+            print('')
+
+            while True:
+
+                if email_eight_type != '':
+                    email_eight_type = email_eight_type
+                    break
+
+                else:
+                    print('')
+                    email_eight_type = input("Enter full e-mail address: ").lower()
+                    print('')
+
+        else:
+            email_creation(email_option)
+    def micro_email_type():
+
+        print(
+            "Validate a list of e-mails or single e-mail:\na. Custom e-mail list\nb. Input single e-mail address\n")
+        email_type_text = input("Enter an alphabet(a/b): ").lower()
+        while True:
+
+            if str(email_type_text) == 'a':
+                return 'first_type'
+            elif str(email_type_text) == 'b':
+                return 'second_type'
+
+            else:
+                print('You did not enter a valid input.')
+                print('')
+                email_type_text = input("Enter an alphabet(a/b): ").lower()
+                print('')
+
+    micro_single_email = ''
+    micro_location_email = ''
+    micro_timeout = None
+    micro_email_type_response = ''
+    if str(wordlist_type) == '5':
+        micro_email_type_response = micro_email_type()
+        if micro_email_type_response == 'second_type':
+
+            print('')
+            micro_single_email = input("Enter full e-mail address: ")
+            print('')
+
+            while True:
+
+                if micro_single_email != '':
+                    micro_single_email = micro_single_email
+                    break
+
+                else:
+                    print('')
+                    micro_single_email = input("Enter full e-mail address: ")
+                    print('')
+
+        elif micro_email_type_response == 'first_type':
+
+            print('')
+            micro_location_email = input("Location to emails list file: ")
+            print('')
+
+            while True:
+
+                if micro_location_email != '':
+                    micro_location_email = micro_location_email
+                    break
+
+                else:
+                    print('')
+                    micro_location_email = input("Location to emails list file: ")
+                    print('')
+
+        micro_timeout = input("Provide the timeout between requests in sec: ")
+        print('')
+        if micro_timeout == '':
+            micro_timeout = None
 
     # Create s3 bucket to scan against for root account e-mail addresses.
 
@@ -442,7 +870,7 @@ def main():
 
     account_arn = sts.get_caller_identity()['Arn']
 
-    results_file = words(input_args, wordlist_type, session)
+    results_file = words(input_args, wordlist_type, session,email_option,email_list_path,email_eight_type,domain_name,micro_single_email,micro_timeout,micro_location_email,micro_email_type_response,micro_domain_name)
     # print(results_file)
     default_bucket_name = "quiet-riot-" + settings.account_no
 
@@ -531,8 +959,11 @@ def main():
             for i in range(0, len(buckets['Buckets'])):
                 if len(buckets['Buckets']) != 0:
                     if 'quiet-riot-bucket' in buckets['Buckets'][i]['Name']:
-                        # print("Deleting Quiet Riot Infrastructure: " + buckets['Buckets'][i]['Name'])
-                        s3.delete_bucket(Bucket=buckets['Buckets'][i]['Name'])
+                        try:
+                            # print("Deleting Quiet Riot Infrastructure: " + buckets['Buckets'][i]['Name'])
+                            s3.delete_bucket(Bucket=buckets['Buckets'][i]['Name'])
+                        except Exception:
+                            pass
                     else:
                         pass
             # Delete ECR Public Repository - Resource that has IAM policy attachment
