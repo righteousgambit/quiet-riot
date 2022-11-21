@@ -39,12 +39,13 @@ What type of scan do you want to attempt? Enter the type of scan for example
 
              1. AWS Account IDs
              2. Microsoft 365 Domains
-             3. AWS Root User E-mail Address
-             4. AWS IAM Principals
+             3. AWS Services Footprinting
+             4. AWS Root User E-mail Address
+             5. AWS IAM Principals
                 4.1. IAM Roles
                 4.2. IAM Users
-             5. Microsoft 365 Users
-            
+             6. Microsoft 365 Users (e-mails)
+             7. Google Workspace Users (e-mails)
 
 --threads, --t
 

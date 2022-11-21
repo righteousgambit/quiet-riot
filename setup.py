@@ -11,10 +11,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="quiet_riot",
-    version="1.0.3",
+    version="1.0.6",
     author="Wess ladd",
     author_email="wesladd@traingrc.com",
-    description="AWS Assessment tool",
+    description="Cloud Recon Tool",
     long_description=long_description,
     long_description_content_type="text/markdown",
     package_data={'quiet_riot': ["results/*.txt","wordlists/*.txt","*.txt","enumeration/*"]},

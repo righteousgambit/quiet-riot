@@ -36,20 +36,25 @@ def words_type(wordlist_type):
             account_no = input('Provide an Account ID to scan against: ')
             print('')
             return 'roles', str(account_no)
+
         elif str(wordlist_type) == '3':
-            return 'root account', 'none'
-        # elif str(wordlist_type) == '3':
-        #     account_no = input('Provide an Account ID to scan against: ')
-        #     print('')
-        #     return 'footprint', str(account_no)
+            account_no = input('Provide an Account ID to scan against: ')
+            print('')
+            return 'footprint', str(account_no)
         elif str(wordlist_type) == '4':
+            return 'root account', 'none'
+
+        elif str(wordlist_type) == '5':
             account_no = input('Provide an Account ID to scan against: ')
             print('')
             return 'roles', str(account_no)
-        elif str(wordlist_type) == '5':
+        elif str(wordlist_type) == '6':
             print('')
             return 'micro_users', 'none'
-        elif str(wordlist_type) == '6':
+        elif str(wordlist_type) == '7':
+            print('')
+            return 'gmail_user', 'none'
+        elif str(wordlist_type) == '8':
             account_no = input('Provide an Account ID to scan against: ')
             print('')
             return 'users', str(account_no)
@@ -73,8 +78,8 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
             if wordlist_type == 'accounts':
                 response = rand_id_generator.rand_id_generator()
                 wordlist_file = response
-            # elif wordlist_type == 'footprint':
-            #     wordlist_file = os.path.dirname(__file__) + '/wordlists/service-linked-roles.txt'
+            elif wordlist_type == 'footprint':
+                wordlist_file = os.path.dirname(__file__) + '/wordlists/service-linked-roles.txt'
             elif wordlist_type == "micro_domain":
                 valid_domain = []
                 domain_name = micro_domain_name
@@ -134,9 +139,8 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
 
                 for i in my_list:
                     if s3aclenum.s3_acl_princ_checker(i, session) == 'Pass':
-                        print(str(i) + " is a root account")
+                        print(str(i))
                         print("")
-                        print(i)
                         valid_emails.append(i)
                     else:
                         pass
@@ -229,18 +233,18 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
                         loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
                     # print(results_file)
                     return results_file
-                    break
-                # elif wordlist_type == 'footprint':
-                #     for item in my_list:
-                #         new_list.append('arn:aws:iam::' + account_no + ':role/' + item)
-                #     with open(wordlist, 'a+') as f:
-                #         for item in new_list:
-                #             f.write("%s\n" % item)
-                #     # Configure user-defined wordlist as roles for triggering via enumeration.loadbalancer.threader(getter())
-                #     results_file = loadbalancer.threader(
-                #         loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
-                #     return results_file
-                #     break
+
+                elif wordlist_type == 'footprint':
+                    for item in my_list:
+                        new_list.append('arn:aws:iam::' + account_no + ':role/' + item)
+                    with open(wordlist, 'a+') as f:
+                        for item in new_list:
+                            f.write("%s\n" % item)
+                    # Configure user-defined wordlist as roles for triggering via enumeration.loadbalancer.threader(getter())
+                    results_file = loadbalancer.threader(
+                        loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
+                    return results_file
+
                 elif wordlist_type == 'users':
                     for item in my_list:
                         new_list.append('arn:aws:iam::' + account_no + ':user/' + item)
@@ -251,7 +255,7 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
                     results_file = loadbalancer.threader(
                         loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
                     return results_file
-                    break
+
                 # TODO: Separate root accounts and setup s3 ACL check for root e-mail. Determine if root e-mail is only enumerable using s3 ACL
                 elif wordlist_type == 'accounts':
                     for item in my_list:
@@ -264,7 +268,7 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
                     results_file = loadbalancer.threader(
                         loadbalancer.getter(thread=input_args.threads, wordlist=wordlist), session=session)
                     return results_file
-                    break
+
                 elif wordlist_type == 'root account' and email_option == 'seventh_type':
                     valid_emails = []
                     print('')
@@ -275,7 +279,7 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
                     for username in my_list:
                         email = username.replace(' ','').lower() + '@' + str(domain_name)
                         if s3aclenum.s3_acl_princ_checker(str(email), session) == 'Pass':
-                            print(str(email) + " is a root account")
+                            print(str(email))
                             print("")
                             valid_emails.append(email)
                         else:
@@ -289,7 +293,52 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
 
                     f.close()
                     return results_file
-                    break
+
+                elif wordlist_type == 'gmail_user':
+                    valid_emails = []
+                    gmail_counter = 0
+                    print('')
+                    print("Scanning for G-Suite (Google Workspace) Users")
+                    print('')
+                    print('Identified G-suite (Google Workspace) Users: ')
+
+                    for username in my_list:
+                        params = {
+                            'email': username,
+                        }
+                        try:
+
+                            response = o365request.get('https://mail.google.com/mail/gxlu', params=params)
+                            response_cookies = response.cookies
+                            if len(response_cookies) == 0:
+                                pass
+                            elif len(response_cookies) == 1:
+                                print('')
+                                print(username)
+                                valid_emails.append(username)
+                                gmail_counter = gmail_counter + 1
+                        except Exception as gmail_exc:
+                            print(gmail_exc)
+                            pass
+                        # response = request.json()
+                        # print(response)
+
+                    print("")
+                    print("-----------Scaning Completed----------")
+                    if gmail_counter == 0:
+                        print( '\nThere were no valid e-mails found.')
+                    elif gmail_counter == 1:
+                        print('\nQuiet Riot discovered one valid e-mail account.')
+                    else:
+                        print(f'\nQuiet Riot discovered {gmail_counter} valid e-mails.\n')
+                    print('')
+                    results_file = f'valid_scan_results-{timestamp}.txt'
+                    with open(results_file, 'a+') as f:
+                        for i in valid_emails:
+                            f.write("%s\n" % i)
+
+                    f.close()
+                    return results_file
 
                 elif wordlist_type == 'root account' and email_option != 'seventh_type' and email_option != 'eight_type':
                     valid_emails = []
@@ -300,9 +349,8 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
 
                     for i in my_list:
                         if s3aclenum.s3_acl_princ_checker(i, session) == 'Pass':
-                            print(str(i) + " is a root account")
+                            print(str(i))
                             print("")
-                            print(i)
                             valid_emails.append(i)
                         else:
                             pass
@@ -472,11 +520,13 @@ def main():
                         What type of scan do you want to attempt? Enter the type of scan for example
                              1. AWS Account IDs
                              2. Microsoft 365 Domains
-                             3. AWS Root User E-mail Address
-                             4. AWS IAM Principals
+                             3. AWS Services Footprinting
+                             4. AWS Root User E-mail Address
+                             5. AWS IAM Principals
                                 4.1. IAM Roles
                                 4.2. IAM Users
-                             5. Microsoft 365 Users
+                             6. Microsoft 365 Users (e-mails)
+                             7. Google Workspace Users (e-mails)
 
                              '''))
 
@@ -692,11 +742,11 @@ def main():
         sub_iam_type = input("Kindly select one of the above scan types:")
         while True:
             if sub_iam_type == "1":
-                wordlist_type = "4"
+                wordlist_type = "5"
                 return wordlist_type
 
             elif sub_iam_type == "2":
-                wordlist_type = "6"
+                wordlist_type = "8"
                 return wordlist_type
 
             else:
@@ -706,14 +756,14 @@ def main():
 
         # print(str(wordlist_type))
 
-    if str(wordlist_type) == "4":
+    if str(wordlist_type) == "5":
         wordlist_type = sub_scan_type()
 
     email_list_path = ''
     email_eight_type = ''
     domain_name = ''
     email_option = ''
-    if str(wordlist_type) == "3":
+    if str(wordlist_type) == "4":
         email_option = email_type()
         if str(email_option) == 'seventh_type':
             print('')
@@ -784,7 +834,7 @@ def main():
     micro_location_email = ''
     micro_timeout = None
     micro_email_type_response = ''
-    if str(wordlist_type) == '5':
+    if str(wordlist_type) == '6':
         micro_email_type_response = micro_email_type()
         if micro_email_type_response == 'second_type':
 
