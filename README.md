@@ -1,7 +1,7 @@
 # Quiet Riot 
 ### :notes: *C'mon, Feel The Noise* :notes:
   
-_An enumeration tool for scalable, unauthenticated validation of AWS principals; including AWS Acccount IDs, root e-mail addresses, users, and roles._
+_An enumeration tool for scalable, unauthenticated validation of AWS, Azure, and GCP principals; including AWS Acccount IDs, root e-mail addresses, users, and roles, Azure Active Directory Users, and Google Workspace Users/E-mails._
 
 __Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 
@@ -12,16 +12,14 @@ See a defender's perspective blog post [here](https://blog.traingrc.com/en/quiet
 
 ### Prerequisites
 boto3/botocore  
-Sufficient AWS credentials configured via CLI
+Sufficient AWS credentials configured via CLI (if performing AWS scan - it is still unauthenticated, but you will need to provision resources)
 
 ### Installation:
-
 First step is to have sufficient AWS credentials configured via CLI. If you do not have your own AWS acccount or sufficient credentials in an AWS account, Quiet Riot will not work.
 
 Create the virtual environment, or you can directly install the quiet_riot pkg using pip.
 
 For installing this package you can run the command pip install quiet-riot. After installing the package you can run the command quiet_riot --help
-
 
 ### Usage:
 
@@ -29,7 +27,7 @@ Arguments for quiet_riot are --scan_type, --threads, --wordlist, --profile
 
 You can provide values for arguments required to run this package. Must require argument is scan_type.
 
-for e.g quiet_riot --scan_type 3 --threads 30 --wordlist D:\path_to_wordlist_file --profile Default
+for e.g quiet_riot --scan_type 3 --threads 30 --wordlist C:\path_to_wordlist_file --profile righteousgambit
 
 Or you can use the short form for arguments as well like --s, --t, --w, --p
 
@@ -68,11 +66,11 @@ After performing extensive analysis of scaling methods using the AWS Python (Bot
 With further testing, I settled on a combination of SNS, ECR-Public, and ECR-Private services running in US-East-1 in ~40%/50%/10% configuration split with ~700 threads. The machine I used was a 2020 Macbook Air (M1 and 16 GB RAM). This configuration yielded on average ~1100 calls/sec, though the actual number of calls can fluctuate significantly depending on a variety of factors including network connectivity. Under these configurations, I did occasionally throw an exception on a thread from throttling...but I have subsequently configured additional re-try attempts (4 -> 7) via botocore that will eliminate this issue with a minor performance trade-off.
 
 #### Computational Difficulty
-To attempt every possible Account ID in AWS (1,000,000,000,000) would require an infeasible amount of time given only one account. Even assuming absolute efficiency*, over the course of a day an attacker will only be able to make 95,040,000 validation checks. Over 30 days, this is 2,851,200,000 validation checks and we are still over 28 years away from enumerating every valid AWS Account ID. Fortunately, there is nothing stopping us from registering many AWS accounts and automating this scan. While there is an initial limit of 20 accounts per AWS organization, I was able to get this limit increased for my Organization via console self-service and approval from an AWS representative. The approval occured without any further questions and now I'm off to automating this writ large. Again, assuming absolute efficiency, the 28 years scanning could potentially be reduced down to ~100 days.
+To attempt every possible Account ID in AWS (1,000,000,000,000) would require an infeasible amount of time given only one account. Even assuming absolute efficiency*, over the course of a day an attacker will only be able to make 95,040,000 validation checks from their local machine. Over 30 days, this is 2,851,200,000 validation checks and we are still over 28 years away from enumerating every valid AWS Account ID. Fortunately, there is nothing stopping us from registering many AWS accounts and automating this scan. While there is an initial limit of 20 accounts per AWS organization, I was able to get this limit increased for my Organization via console self-service and approval from an AWS representative. The approval occured without any further questions and now I'm off to automating this writ large. Again, assuming absolute efficiency, the 28 years of scanning to exhaust the account ID space could potentially be reduced down a few days or hours.
 
 *~1100 API calls/check per second in perpetuity per account and never repeating a guessed Account ID.
 
-## Potential Supported Services
+## Potential Supported AWS Services
 
 | # | AWS Service | Description | API Limits | Resource Pricing | Enumeration Capability |
 | --- | ----------- | ----------- | --------------- |--------------- | ---------- |
