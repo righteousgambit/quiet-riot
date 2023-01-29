@@ -3,8 +3,8 @@ import setuptools
 REQUIRES = [
                 "setuptools>=42",
                  "wheel",
-                 "boto3==1.17.84",
-                 "requests==2.28.1"
+                 "boto3>=1.17.84",
+                 "requests>=2.28.1"
 ]
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
