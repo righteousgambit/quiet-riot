@@ -19,7 +19,7 @@ First step is to have sufficient AWS credentials configured via CLI. If you do n
 
 Create the virtual environment, or you can directly install the quiet_riot pkg using pip.
 
-For installing this package you can run the command pip install quiet-riot. After installing the package you can run the command quiet_riot --help
+For installing this package you can run the command ` pip install quiet-riot `. After installing the package you can run the command  ` quiet_riot --help `
 
 ### Usage:
 
@@ -27,7 +27,7 @@ Arguments for quiet_riot are --scan_type, --threads, --wordlist, --profile
 
 You can provide values for arguments required to run this package. Must require argument is scan_type.
 
-for e.g quiet_riot --scan_type 3 --threads 30 --wordlist C:\path_to_wordlist_file --profile righteousgambit
+for e.g ` quiet_riot --scan_type 3 --threads 30 --wordlist C:\path_to_wordlist_file --profile righteousgambit `
 
 Or you can use the short form for arguments as well like --s, --t, --w, --p
 
