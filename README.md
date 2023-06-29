@@ -19,7 +19,7 @@ First step is to have sufficient AWS credentials configured via CLI. If you do n
 
 Create the virtual environment, or you can directly install the quiet_riot pkg using pip.
 
-For installing this package you can run the command ` pip install quiet-riot `. After installing the package you can run the command  ` quiet_riot --help `
+To install this package using pip, you can run the command ` pip install quiet-riot `. After installing the package you can run the command  ` quiet_riot --help `
 
 ### Usage:
 
