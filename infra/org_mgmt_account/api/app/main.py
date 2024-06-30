@@ -2,12 +2,15 @@
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Union
-from enum import Enum
+from config.logging import configure_logging
+from config.connections import AWSConnections, aws_connections
+from routers import query, live
+
+# Using the AWSConnections class to create SQS and DynamoDB clients
+sqs_client = aws_connections.get_sqs_client()
+dynamodb_client = aws_connections.get_dynamodb_client()
 
 app = FastAPI(
     title="Quiet Riot",
@@ -27,42 +30,10 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-class PrincipalType(str, Enum):
-    AWS_ACCOUNT_IDS = "AWS Account IDs"
-    MICROSOFT_365_DOMAINS = "Microsoft 365 Domains"
-    AWS_SERVICES_FOOTPRINTING = "AWS Services Footprinting"
-    AWS_ROOT_USER_EMAIL_ADDRESS = "AWS Root User E-mail Address"
-    AWS_IAM_PRINCIPALS = "AWS IAM Principals"
-    IAM_ROLES = "IAM Roles"
-    IAM_USERS = "IAM Users"
-    MICROSOFT_365_USERS = "Microsoft 365 Users (e-mails)"
-    GOOGLE_WORKSPACE_USERS = "Google Workspace Users (e-mails)"
-
-class QueryRequest(BaseModel):
-    principal_type: PrincipalType
-    principal_value: str
-
-class BulkQueryRequest(BaseModel):
-    principal_values: List[str]
-
-@app.get("/live")
-async def live():
-    return {"status": "alive"}
-
-@app.post("/query")
-async def query(request: QueryRequest):
-    # Placeholder for actual query logic
-    if not request.principal_value:
-        raise HTTPException(status_code=400, detail="Invalid principal value")
-    return {"principal_type": request.principal_type, "principal_value": request.principal_value, "status": "queried"}
-
-@app.post("/bulk-query")
-async def bulk_query(request: BulkQueryRequest):
-    # Placeholder for actual bulk query logic
-    if not request.principal_values:
-        raise HTTPException(status_code=400, detail="Invalid principal values")
-    return {"principal_values": request.principal_values, "status": "bulk queried"}
+# Include the routers
+app.include_router(query.router)
+app.include_router(live.router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
