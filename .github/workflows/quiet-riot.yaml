@@ -1,0 +1,60 @@
+name: Deploy Quiet Riot Dev
+run-name: Deploy commit ${{ github.sha }} by @${{ github.actor }}
+# get start
+on:
+  push:
+    branches:
+      - 'dev'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cloudformation_deploy:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-region: us-east-1
+      #     role-to-assume: arn:aws:iam::211125621822:role/github-actions-role
+      #     role-session-name: quiet-riot-commit-${{ github.sha }}
+
+      # - name: STS Get Caller Identity
+      #   run: aws sts get-caller-identity
+
+      # - name: Quiet Riot Dev API Container Build and Push
+      #   working-directory: infra/api
+      #   run: |
+      #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+      #     docker build -t quiet-riotapi-dev .
+      #     docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+      #     docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+
+      # - name: Package Lambda Function Code
+      #   working-directory: infra
+      #   run: aws cloudformation package --template-file dev-cloudformation.yaml --s3-bucket righteous-gambit-dot-com-deployment-packages --output-template-file righteous_gambit_dot_com_packaged.yaml --region us-east-1
+
+      # - name: Deploy Quiet Riot Dev CloudFormation Stack
+      #   working-directory: infra
+      #   run: aws cloudformation deploy --template-file righteous_gambit_dot_com_packaged.yaml --stack-name QuietRiotDev --capabilities CAPABILITY_NAMED_IAM --region us-east-1
+
+      # - name: Update ECS Service
+      #   working-directory: infra
+      #   run: |
+      #     sleep 90
+      #     aws ecs update-service --service QuietRiotFargateService-dev --cluster QuietRiotClusterDev --force-new-deployment
+
+      # - name: Get Quiet Riot Stack Output Information
+      #   run: aws cloudformation describe-stacks --stack-name QuietRiotDev --query "Stacks[0].Outputs" --output text
+    
