@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  AmplifyApp:
+    Type: AWS::Amplify::App
+    Properties: 
+      Name: NextJSFrontend
+      Repository: https://github.com/your-repo/nextjs-frontend
+      OauthToken: !Ref GitHubToken
+      BuildSpec: |
+        version: 1.0
+        frontend:
+          phases:
+            preBuild:
+              commands:
+                - yarn install
+            build:
+              commands:
+                - yarn build
+          artifacts:
+            baseDirectory: .next
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - node_modules/**/*
+  
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: FastAPICluster
+  
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: FastAPITask
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: '256'
+      Memory: '512'
+      ContainerDefinitions:
+        - Name: fastapi-container
+          Image: your-docker-image
+          PortMappings:
+            - ContainerPort: 80
+  
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref ECSTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - subnet-12345678
+            - subnet-87654321
+          SecurityGroups:
+            - sg-12345678
+
+  SQSQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: FastAPIRequestQueue
