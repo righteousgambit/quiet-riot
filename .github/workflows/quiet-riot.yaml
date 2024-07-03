@@ -23,12 +23,12 @@ jobs:
         with:
           node-version: 18
 
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     aws-region: us-east-1
-      #     role-to-assume: arn:aws:iam::211125621822:role/github-actions-role
-      #     role-session-name: quiet-riot-commit-${{ github.sha }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::201012399609:role/github-actions-role
+          role-session-name: quiet-riot-commit-${{ github.sha }}
 
       # - name: STS Get Caller Identity
       #   run: aws sts get-caller-identity
