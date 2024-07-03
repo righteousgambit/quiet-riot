@@ -29,6 +29,7 @@ jobs:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::201012399609:role/github-actions-role
           role-session-name: quiet-riot-commit-${{ github.sha }}
+          
 
       # - name: STS Get Caller Identity
       #   run: aws sts get-caller-identity
