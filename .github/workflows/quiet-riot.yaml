@@ -31,16 +31,16 @@ jobs:
           role-session-name: quiet-riot-commit-${{ github.sha }}
           
 
-      # - name: STS Get Caller Identity
-      #   run: aws sts get-caller-identity
+      - name: STS Get Caller Identity
+        run: aws sts get-caller-identity
 
-      # - name: Quiet Riot Dev API Container Build and Push
-      #   working-directory: infra/api
-      #   run: |
-      #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-      #     docker build -t quiet-riotapi-dev .
-      #     docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
-      #     docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+      - name: Quiet Riot Dev API Container Build and Push
+        working-directory: infra/
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+          docker build -t quiet-riotapi-dev .
+          docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+          docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
 
       # - name: Package Lambda Function Code
       #   working-directory: infra
