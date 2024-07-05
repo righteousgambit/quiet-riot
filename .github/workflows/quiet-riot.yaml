@@ -30,7 +30,6 @@ jobs:
           role-to-assume: arn:aws:iam::201012399609:role/github-actions-role
           role-session-name: quiet-riot-commit-${{ github.sha }}
           
-
       - name: STS Get Caller Identity
         run: aws sts get-caller-identity
 
@@ -38,7 +37,7 @@ jobs:
         working-directory: infra/
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-          docker build -t quiet-riotapi-dev .
+          docker build -t quiet-riot-api-dev .
           docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
           docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
 
