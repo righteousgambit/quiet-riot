@@ -139,10 +139,10 @@ Resources:
   #         DYNAMODB_TABLE: MyResultsTable
   #         SQS_QUEUE_URL: !Ref SQSQueue
 
-  LambdaTrigger:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      BatchSize: 10
-      EventSourceArn: !GetAtt SQSQueue.Arn
-      # FunctionName: !GetAtt LambdaFunction.Arn
-      Enabled: true
+  # LambdaTrigger:
+  #   Type: AWS::Lambda::EventSourceMapping
+  #   Properties:
+  #     BatchSize: 10
+  #     EventSourceArn: !GetAtt SQSQueue.Arn
+  #     FunctionName: !GetAtt LambdaFunction.Arn
+  #     Enabled: true
