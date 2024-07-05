@@ -21,7 +21,6 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                   - dynamodb:DeleteItem
-                  # TODO: change this to the actual table name
                 Resource: arn:aws:dynamodb:us-east-1:123456789012:table/YourDynamoDBTable
 
   LambdaFunction:
@@ -37,4 +36,3 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: YourDynamoDBTable
-
