@@ -16,11 +16,14 @@ RUN apt-get update && \
 RUN python3.11 -m pip install --upgrade pip
 
 # Copy the requirements file and install Python packages
-COPY requirements.txt /code/
-RUN pip3 install --no-cache-dir -r /code/requirements.txt
+# COPY child_accounts/requirements.txt /code/
+# RUN pip3 install --no-cache-dir -r /code/requirements.txt
 
-# Copy the application code
-COPY app /code/app
+# Copy the Lambda functions
+COPY child_accounts/lambda_function /code/lambda_function
+
+# Copy the CloudFormation template (if needed in the container)
+COPY child_accounts/aws_cfn_infrastructure.yaml /code/
 
 # Command to run when the container starts
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443"]
+CMD ["python3.11", "-m", "lambda_function.handler"]
