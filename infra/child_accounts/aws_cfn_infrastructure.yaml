@@ -1,42 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: Organization-wide StackSet to create and deploy resources and Lambda function using SAM
+Description: Organization-wide StackSet to create and deploy resources and Lambda function
 
 Resources:
-  LambdaFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: MyBatchRequestLambda
-      Handler: lambda.lambda_handler  # Update with your actual handler function
-      Runtime: python3.9
-      MemorySize: 128
-      Timeout: 30
-      Environment:
-        Variables:
-          SNS_TOPIC_ARN: !Ref SNSTopic
-          ECR_PUBLIC_REPO_ARN: !Sub arn:aws:ecr-public::${AWS::AccountId}:repository/my-ecr-public-repo
-          ECR_PRIVATE_REPO_ARN: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/my-ecr-private-repo
-          IAM_ROLE_ARN: !GetAtt IAMRole.Arn
-          DYNAMODB_TABLE: MyResultsTable
-          SQS_QUEUE_URL: !Ref SQSQueue
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: MyResultsTable
-        - SQSSendMessagePolicy:
-            QueueName: MyRequestQueue
-        - SNSPublishPolicy:
-            TopicName: MySNSTopic
-        - ECRPublicPolicy:
-            RepositoryName: my-ecr-public-repo
-        - ECRPrivatePolicy:
-            RepositoryName: my-ecr-private-repo
-        - IAMPolicy:
-            IAMRoleName: MyLambdaExecutionRole
-
-  IAMRole:
+  LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: MyLambdaExecutionRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -45,7 +13,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: DynamoDBCrudPolicy
+        - PolicyName: LambdaDynamoDBPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -55,7 +23,7 @@ Resources:
                   - dynamodb:UpdateItem
                   - dynamodb:GetItem
                 Resource: '*'
-        - PolicyName: SQSSendMessagePolicy
+        - PolicyName: LambdaSQSPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -63,7 +31,7 @@ Resources:
                 Action:
                   - sqs:SendMessage
                 Resource: !GetAtt SQSQueue.Arn
-        - PolicyName: SNSPublishPolicy
+        - PolicyName: LambdaSNSTopicPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -71,23 +39,16 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource: !Ref SNSTopic
-        - PolicyName: ECRPublicPolicy
+        - PolicyName: LambdaECRPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
                   - ecr-public:InitiateLayerUpload
-                Resource: !Sub arn:aws:ecr-public::${AWS::AccountId}:repository/my-ecr-public-repo
-        - PolicyName: ECRPrivatePolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
                   - ecr:InitiateLayerUpload
-                Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/my-ecr-private-repo
-        - PolicyName: IAMPolicy
+                Resource: '*'
+        - PolicyName: LambdaIAMPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -111,6 +72,34 @@ Resources:
     Properties:
       RepositoryName: my-ecr-private-repo
 
+  IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MyLambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                  - sqs:SendMessage
+                  - sns:Publish
+                  - ecr-public:InitiateLayerUpload
+                  - ecr:InitiateLayerUpload
+                  - iam:UpdateAssumeRolePolicy
+                Resource: '*'
+
   SQSQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -129,3 +118,31 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
+
+
+  # LambdaFunction:
+  #   Type: AWS::Lambda::Function
+  #   Properties:
+  #     FunctionName: MyBatchRequestLambda
+  #     Handler: index.lambda_handler
+  #     Role: !GetAtt LambdaExecutionRole.Arn
+  #     Code:
+  #       S3Bucket: quiet-riot-global-bucket 
+  #       S3Key: lambda_code.zip
+  #     Runtime: python3.9
+  #     Environment:
+  #       Variables:
+  #         SNS_TOPIC_ARN: !Ref SNSTopic
+  #         ECR_PUBLIC_REPO_ARN: !Sub arn:aws:ecr-public::${AWS::AccountId}:repository/my-ecr-public-repo
+  #         ECR_PRIVATE_REPO_ARN: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/my-ecr-private-repo
+  #         IAM_ROLE_ARN: !GetAtt IAMRole.Arn
+  #         DYNAMODB_TABLE: MyResultsTable
+  #         SQS_QUEUE_URL: !Ref SQSQueue
+
+  # LambdaTrigger:
+  #   Type: AWS::Lambda::EventSourceMapping
+  #   Properties:
+  #     BatchSize: 10
+  #     EventSourceArn: !GetAtt SQSQueue.Arn
+  #     FunctionName: !GetAtt LambdaFunction.Arn
+  #     Enabled: true
