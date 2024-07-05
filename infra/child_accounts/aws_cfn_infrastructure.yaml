@@ -126,7 +126,7 @@ Resources:
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: your-s3-bucket
+        S3Bucket: quiet-riot-global-bucket 
         S3Key: your-lambda-code.zip
       Runtime: python3.9
       Environment:
