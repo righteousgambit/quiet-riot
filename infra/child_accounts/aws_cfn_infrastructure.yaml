@@ -119,6 +119,7 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
 
+
   # LambdaFunction:
   #   Type: AWS::Lambda::Function
   #   Properties:
