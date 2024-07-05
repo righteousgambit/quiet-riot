@@ -37,9 +37,9 @@ jobs:
         working-directory: infra/
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-          docker build -t quiet-riot-api-dev .
-          docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
-          docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+          docker build -t quiet-riotapi-dev .
+          docker tag quiet-riotapi-dev:latest public.ecr.aws/x1p4o1n7/quiet-riotapi-dev:latest
+          docker push public.ecr.aws/x1p4o1n7/quiet-riotapi-dev:latest
 
       # - name: Package Lambda Function Code
       #   working-directory: infra
