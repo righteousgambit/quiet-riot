@@ -119,29 +119,29 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
 
-  LambdaFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: MyBatchRequestLambda
-      Handler: index.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Code:
-        S3Bucket: quiet-riot-global-bucket 
-        S3Key: lambda_code.zip
-      Runtime: python3.9
-      Environment:
-        Variables:
-          SNS_TOPIC_ARN: !Ref SNSTopic
-          ECR_PUBLIC_REPO_ARN: !Sub arn:aws:ecr-public::${AWS::AccountId}:repository/my-ecr-public-repo
-          ECR_PRIVATE_REPO_ARN: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/my-ecr-private-repo
-          IAM_ROLE_ARN: !GetAtt IAMRole.Arn
-          DYNAMODB_TABLE: MyResultsTable
-          SQS_QUEUE_URL: !Ref SQSQueue
+  # LambdaFunction:
+  #   Type: AWS::Lambda::Function
+  #   Properties:
+  #     FunctionName: MyBatchRequestLambda
+  #     Handler: index.lambda_handler
+  #     Role: !GetAtt LambdaExecutionRole.Arn
+  #     Code:
+  #       S3Bucket: quiet-riot-global-bucket 
+  #       S3Key: lambda_code.zip
+  #     Runtime: python3.9
+  #     Environment:
+  #       Variables:
+  #         SNS_TOPIC_ARN: !Ref SNSTopic
+  #         ECR_PUBLIC_REPO_ARN: !Sub arn:aws:ecr-public::${AWS::AccountId}:repository/my-ecr-public-repo
+  #         ECR_PRIVATE_REPO_ARN: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/my-ecr-private-repo
+  #         IAM_ROLE_ARN: !GetAtt IAMRole.Arn
+  #         DYNAMODB_TABLE: MyResultsTable
+  #         SQS_QUEUE_URL: !Ref SQSQueue
 
   LambdaTrigger:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       BatchSize: 10
       EventSourceArn: !GetAtt SQSQueue.Arn
-      FunctionName: !GetAtt LambdaFunction.Arn
+      # FunctionName: !GetAtt LambdaFunction.Arn
       Enabled: true
