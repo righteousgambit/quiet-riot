@@ -34,17 +34,22 @@ jobs:
       - name: STS Get Caller Identity
         run: aws sts get-caller-identity
 
-      - name: Install AWS SAM CLI
-        run: |
-          curl -Lo sam https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
-          sudo unzip -d /usr/local/bin/ sam
-          sam --version
+      # - name: Quiet Riot Dev API Container Build and Push
+      #   working-directory: infra/
+      #   run: |
+      #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+      #     docker build -t quiet-riot-api-dev .
+      #     docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+      #     docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
 
-      - name: Package Lambda Function Code with SAM
+      - name: Install AWS CLI
+        run: sudo apt-get install -y awscli
+
+      - name: Package Lambda Function Code
         working-directory: infra/child_accounts
         run: |
-          sam package \
-            --template-file aws_sam_template.yaml \
+          aws cloudformation package \
+            --template-file aws_cfn_infrastructure.yaml \
             --s3-bucket quiet-riot-global-bucket \
             --output-template-file packaged-template.yaml \
             --region us-east-1
@@ -60,13 +65,3 @@ jobs:
 
       - name: Get Quiet Riot Stack Output Information
         run: aws cloudformation describe-stacks --stack-name QuietRiotDev --query "Stacks[0].Outputs" --output text
-    
-
-
-      # - name: Quiet Riot Dev API Container Build and Push
-      #   working-directory: infra/
-      #   run: |
-      #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-      #     docker build -t quiet-riot-api-dev .
-      #     docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
-      #     docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
