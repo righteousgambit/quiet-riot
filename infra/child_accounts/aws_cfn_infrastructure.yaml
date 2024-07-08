@@ -20,8 +20,6 @@ Resources:
               - Effect: Allow
                 Action:
                   - dynamodb:PutItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:GetItem
                 Resource: '*'
         - PolicyName: LambdaSQSPolicy
           PolicyDocument:
@@ -29,8 +27,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - sqs:SendMessage
-                Resource: !GetAtt SQSQueue.Arn
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: '*'
         - PolicyName: LambdaSNSTopicPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -38,7 +38,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sns:Publish
-                Resource: !Ref SNSTopic
+                Resource: '*'
         - PolicyName: LambdaECRPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -55,7 +55,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - iam:UpdateAssumeRolePolicy
-                Resource: !GetAtt IAMRole.Arn
+                Resource: '*'
 
   SNSTopic:
     Type: AWS::SNS::Topic
@@ -93,7 +93,9 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                   - dynamodb:GetItem
-                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
                   - sns:Publish
                   - ecr-public:InitiateLayerUpload
                   - ecr:InitiateLayerUpload
@@ -119,6 +121,32 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
 
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: MyBatchRequestLambda
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: quiet-riot-global-bucket 
+        S3Key: lambda_code.zip
+      Runtime: python3.9
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SNSTopic
+          ECR_PUBLIC_REPO_ARN: !Sub arn:aws:ecr-public::${AWS::AccountId}:repository/my-ecr-public-repo
+          ECR_PRIVATE_REPO_ARN: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/my-ecr-private-repo
+          IAM_ROLE_ARN: !GetAtt IAMRole.Arn
+          DYNAMODB_TABLE: MyResultsTable
+          SQS_QUEUE_URL: !Ref SQSQueue
+
+  LambdaTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      EventSourceArn: !GetAtt SQSQueue.Arn
+      FunctionName: !GetAtt LambdaFunction.Arn
+      Enabled: true
 
   # LambdaFunction:
   #   Type: AWS::Lambda::Function
