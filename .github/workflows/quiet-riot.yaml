@@ -18,33 +18,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::201012399609:role/github-actions-role
           role-session-name: quiet-riot-commit-${{ github.sha }}
-          
-
       - name: STS Get Caller Identity
         run: aws sts get-caller-identity
-
-      # - name: Quiet Riot Dev API Container Build and Push
-      #   working-directory: infra/
-      #   run: |
-      #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-      #     docker build -t quiet-riot-api-dev .
-      #     docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
-      #     docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
-
       - name: Install AWS CLI
         run: sudo apt-get install -y awscli
-
+      - name: Zip Lambda Function Code
+        run: zip -r9 lambda_code.zip infra/child_accounts/lambda_function/
+      - name: Upload Lambda Code to S3
+        run: aws s3 cp lambda_code.zip s3://quiet-riot-global-bucket/lambda_code.zip
       - name: Package Lambda Function Code
         working-directory: infra/child_accounts
         run: |
@@ -53,7 +40,6 @@ jobs:
             --s3-bucket quiet-riot-global-bucket \
             --output-template-file packaged-template.yaml \
             --region us-east-1
-
       - name: Deploy Quiet Riot Dev CloudFormation Stack
         working-directory: infra/child_accounts
         run: |
@@ -62,6 +48,14 @@ jobs:
             --stack-name QuietRiotDev \
             --capabilities CAPABILITY_NAMED_IAM \
             --region us-east-1
-
       - name: Get Quiet Riot Stack Output Information
         run: aws cloudformation describe-stacks --stack-name QuietRiotDev --query "Stacks[0].Outputs" --output text
+
+
+      # - name: Quiet Riot Dev API Container Build and Push
+      #   working-directory: infra/
+      #   run: |
+      #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+      #     docker build -t quiet-riot-api-dev .
+      #     docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+      #     docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
