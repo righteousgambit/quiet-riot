@@ -1,153 +1,22 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: Management Account Resources
 
 Resources:
-  VPC:
-    Type: AWS::EC2::VPC
+  MainSQSQueue:
+    Type: AWS::SQS::Queue
     Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: FastAPIVPC
+      QueueName: MainRequestQueue
 
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-        - Key: Name
-          Value: FastAPIInternetGateway
-
-  VPCGatewayAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
-
-  PublicSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [ 0, !GetAZs ]
-      Tags:
-        - Key: Name
-          Value: FastAPIPublicSubnet1
-
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.2.0/24
-      MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [ 1, !GetAZs ]
-      Tags:
-        - Key: Name
-          Value: FastAPIPublicSubnet2
-
-  RouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: FastAPIRouteTable
-
-  Route:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  SubnetRouteTableAssociation1:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet1
-      RouteTableId: !Ref RouteTable
-
-  SubnetRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref RouteTable
-
-  DynamoDBTable:
+  ResultsDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: QuietRiotEnumerationTable
+      TableName: ResultsTable
       AttributeDefinitions:
-        - AttributeName: id
+        - AttributeName: RequestId
           AttributeType: S
       KeySchema:
-        - AttributeName: id
+        - AttributeName: RequestId
           KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-
-  AmplifyApp:
-    Type: AWS::Amplify::App
-    Properties: 
-      Name: NextJSFrontend
-      Repository: https://github.com/your-repo/nextjs-frontend
-      OauthToken: !Ref GitHubToken
-      BuildSpec: |
-        version: 1.0
-        frontend:
-          phases:
-            preBuild:
-              commands:
-                - yarn install
-            build:
-              commands:
-                - yarn build
-          artifacts:
-            baseDirectory: .next
-            files:
-              - '**/*'
-          cache:
-            paths:
-              - node_modules/**/*
-  
-  ECSCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: FastAPICluster
-  
-  ECSTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: FastAPITask
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Cpu: '256'
-      Memory: '512'
-      ContainerDefinitions:
-        - Name: fastapi-container
-          Image: your-docker-image
-          PortMappings:
-            - ContainerPort: 80
-  
-  ECSService:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref ECSTaskDefinition
-      DesiredCount: 1
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          Subnets:
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-          SecurityGroups:
-            - sg-12345678
-
-  SQSQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: FastAPIRequestQueue

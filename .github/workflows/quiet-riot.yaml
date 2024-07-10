@@ -1,6 +1,6 @@
 name: Deploy Quiet Riot Dev
 run-name: Deploy commit ${{ github.sha }} by @${{ github.actor }}
-# get start
+
 on:
   push:
     branches:
@@ -11,51 +11,66 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cloudformation_deploy:
+  deploy:
     permissions:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::201012399609:role/github-actions-role
           role-session-name: quiet-riot-commit-${{ github.sha }}
-      - name: STS Get Caller Identity
-        run: aws sts get-caller-identity
+          
       - name: Install AWS CLI
         run: sudo apt-get install -y awscli
-      - name: Zip Lambda Function Code
-        run: zip -r9 lambda_code.zip infra/child_accounts/lambda_function/
+
+      - name: Zip Lambda Functions
+        working-directory: infra/child_accounts
+        run: zip -r lambda_code.zip lambda_function
+
       - name: Upload Lambda Code to S3
-        run: aws s3 cp lambda_code.zip s3://quiet-riot-global-bucket/lambda_code.zip
-      - name: Package Lambda Function Code
+        run: aws s3 cp infra/child_accounts/lambda_code.zip s3://quiet-riot-global-bucket/lambda_code.zip
+
+      - name: Package Management Account CloudFormation Template
+        working-directory: infra/org_mgmt_account
+        run: |
+          aws cloudformation package \
+            --template-file aws_cfn_infrastructure.yaml \
+            --s3-bucket quiet-riot-global-bucket \
+            --output-template-file packaged-template-mgmt.yaml \
+            --region us-east-1
+
+      - name: Deploy Management Account CloudFormation Stack
+        working-directory: infra/org_mgmt_account
+        run: |
+          aws cloudformation deploy \
+            --template-file packaged-template-mgmt.yaml \
+            --stack-name QuietRiotMgmt \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --region us-east-1
+
+      - name: Package Child Account CloudFormation Template
         working-directory: infra/child_accounts
         run: |
           aws cloudformation package \
             --template-file aws_cfn_infrastructure.yaml \
             --s3-bucket quiet-riot-global-bucket \
-            --output-template-file packaged-template.yaml \
+            --output-template-file packaged-template-child.yaml \
             --region us-east-1
-      - name: Deploy Quiet Riot Dev CloudFormation Stack
+
+      - name: Deploy Child Account CloudFormation StackSet
         working-directory: infra/child_accounts
         run: |
-          aws cloudformation deploy \
-            --template-file packaged-template.yaml \
-            --stack-name QuietRiotDev \
+          aws cloudformation create-stack-set \
+            --stack-set-name QuietRiotChildAccounts \
+            --template-body file://packaged-template-child.yaml \
             --capabilities CAPABILITY_NAMED_IAM \
             --region us-east-1
-      - name: Get Quiet Riot Stack Output Information
-        run: aws cloudformation describe-stacks --stack-name QuietRiotDev --query "Stacks[0].Outputs" --output text
 
-
-      # - name: Quiet Riot Dev API Container Build and Push
-      #   working-directory: infra/
-      #   run: |
-      #     aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-      #     docker build -t quiet-riot-api-dev .
-      #     docker tag quiet-riot-api-dev:latest public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
-      #     docker push public.ecr.aws/x1p4o1n7/quiet-riot-api-dev:latest
+      - name: Get CloudFormation Stack Output Information
+        run: aws cloudformation describe-stacks --stack-name QuietRiotMgmt --query "Stacks[0].Outputs" --output text
