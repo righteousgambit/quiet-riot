@@ -54,6 +54,7 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --region us-east-1
 
+          
       - name: Package Child Account CloudFormation Template
         working-directory: infra/child_accounts
         run: |
