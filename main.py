@@ -103,7 +103,7 @@ def words(input_args, wordlist_type, session,email_option,email_list_path,email_
                 else:
                     print(f"[info] The listed domain {domain_name} does not exist.\n")
                 print('')
-                print("-----------Scaning Completed----------")
+                print("-----------Scanning Completed----------")
                 print('')
                 results_file = f'valid_scan_results-{timestamp}.txt'
                 with open(results_file, 'a+') as f:
