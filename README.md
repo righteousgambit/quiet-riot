@@ -1,104 +1,326 @@
-# Quiet Riot 
+# Quiet Riot
 ### :notes: *C'mon, Feel The Noise* :notes:
-  
-_An enumeration tool for scalable, unauthenticated validation of AWS, Azure, and GCP principals; including AWS Acccount IDs, root e-mail addresses, users, and roles, Azure Active Directory Users, and Google Workspace Users/E-mails._
+
+_An enumeration tool for scalable, unauthenticated validation of AWS, Azure, and GCP principals; including AWS Account IDs, root e-mail addresses, users, and roles, Azure Active Directory Users, and Google Workspace Users/E-mails._
 
 __Credit:__ Daniel Grzelak [@dagrz](https://twitter.com/dagrz) for identifying the technique and Will Bengston [@__muscles](https://twitter.com/__muscles) for inspiring me to scale it.
 
-See the introductory blog post [here](https://blog.traingrc.com/en/introducing-quiet-riot).  
-See a defender's perspective blog post [here](https://blog.traingrc.com/en/quiet-riot-defenders-lens).  
+See the introductory blog post [here](https://blog.traingrc.com/en/introducing-quiet-riot).
+See a defender's perspective blog post [here](https://blog.traingrc.com/en/quiet-riot-defenders-lens).
 
-## Getting Started With Quiet Riot
+## 🚀 Quick Start
+
+### Installation
+
+**Using pipx (recommended):**
+
+```bash
+pipx install quiet-riot
+```
+
+**Using pip:**
+
+```bash
+pip install quiet-riot
+```
+
+**Development installation:**
+
+```bash
+git clone https://github.com/righteousgambit/quiet-riot.git
+cd quiet-riot
+pip install -e ".[dev]"
+```
 
 ### Prerequisites
-boto3/botocore  
-Sufficient AWS credentials configured via CLI (if performing AWS scan - it is still unauthenticated, but you will need to provision resources)
 
-### Installation:
-First step is to have sufficient AWS credentials configured via CLI. If you do not have your own AWS acccount or sufficient credentials in an AWS account, Quiet Riot will not work.
+- Python 3.8+
+- AWS credentials configured (for AWS scans - still unauthenticated, but resources need to be provisioned)
+- boto3/botocore (installed automatically)
 
-Create the virtual environment, or you can directly install the quiet_riot pkg using pip.
+## 📖 Usage
 
-For installing this package you can run the command pip install quiet-riot. After installing the package you can run the command quiet_riot --help
+### CLI Usage
 
-### Usage:
+Quiet Riot provides a modern CLI interface with support for AWS profile names and IAM role ARNs.
 
-Arguments for quiet_riot are --scan_type, --threads, --wordlist, --profile
+#### Basic Examples
 
-You can provide values for arguments required to run this package. Must require argument is scan_type.
+```bash
+# AWS Account ID enumeration (using default profile)
+quiet-riot --scan 1 --threads 100
 
-for e.g quiet_riot --scan_type 3 --threads 30 --wordlist C:\path_to_wordlist_file --profile righteousgambit
+# Using a specific AWS profile
+quiet-riot --scan 1 --threads 100 --profile my-profile
 
-Or you can use the short form for arguments as well like --s, --t, --w, --p
+# Using an IAM role ARN (profile will be created automatically)
+quiet-riot --scan 1 --threads 100 --arn arn:aws:iam::123456789012:role/MyRole
 
---scan_type, --s      
+# AWS IAM Principals (requires account ID and wordlist)
+quiet-riot --scan 5 --account-id 123456789012 --wordlist wordlists/service-linked-roles.txt --threads 50 --profile my-profile
 
-What type of scan do you want to attempt? Enter the type of scan for example
+# Microsoft 365 Domain check
+quiet-riot --scan 2 --domain example.com --profile my-profile
 
-             1. AWS Account IDs
-             2. Microsoft 365 Domains
-             3. AWS Services Footprinting
-             4. AWS Root User E-mail Address
-             5. AWS IAM Principals
-                4.1. IAM Roles
-                4.2. IAM Users
-             6. Microsoft 365 Users (e-mails)
-             7. Google Workspace Users (e-mails)
+# With custom log level
+quiet-riot --scan 1 --log-level DEBUG --profile my-profile
+```
 
---threads, --t
+#### AWS Credentials Configuration
 
-For number of threads you have to provide the number for e.g 23 , 30 90 etc. Approximately how many threads do you think you want to run? 
+Quiet Riot supports multiple ways to configure AWS credentials:
 
-Hint: 2020 M1 Macbook Air w/ 16 GB RAM optimizes @ around 700 threads from limited testing.
+1. **Profile Name (Preferred)**: Use an existing AWS profile from `~/.aws/config` or `~/.aws/credentials`
+   ```bash
+   quiet-riot --scan 1 --profile my-profile
+   ```
 
---wordlist, --w
+2. **IAM Role ARN**: Provide a full IAM role ARN. Quiet Riot will automatically create a profile for role assumption
+   ```bash
+   quiet-riot --scan 1 --arn arn:aws:iam::123456789012:role/MyRole
+   ```
 
-Path to the world list file which will be required for scan. 
+3. **Default Profile**: If neither `--profile` nor `--arn` is provided, Quiet Riot will try the `default` profile
+   ```bash
+   quiet-riot --scan 1  # Uses default profile
+   ```
 
---profile, --p  
+**Profile Priority**: `--profile` takes precedence over `--arn` if both are provided.
 
-Provide the name of aws profile configured through cli for e.g Default,Dev
+#### CLI Arguments
 
-### Featureploitation Limits
-#### Throttling
-After performing extensive analysis of scaling methods using the AWS Python (Boto3) SDK, I was able to determine that the bottleneck for scanning (at least for Python and awscli -based tools) is I/O capacity of a single-threaded Python application. After modifying the program to run with multiple threads, I was able to trigger exceptions in individual threads due to throttling by the various AWS APIs. You can see the results from running a few benchmarking test scans [here](./results/scan-run-statistics.txt). APIs that I tested had wildly different throttling limits and notably, s3 bucket policy attempts took ~10x as long as similar attempts against other services.
+| Argument | Short | Required | Description |
+|----------|-------|----------|-------------|
+| `--scan` | `--s` | Yes | Scan type (1-7) |
+| `--threads` | `--t` | No | Number of threads (default: 100) |
+| `--wordlist` | `--w` | No | Path to wordlist file |
+| `--profile` | `--p` | No | AWS profile name (preferred over --arn) |
+| `--arn` | - | No | AWS IAM role ARN (full format) |
+| `--account-id` | - | No | AWS Account ID (required for some scan types) |
+| `--domain` | - | No | Domain name (required for Microsoft 365 scans) |
+| `--log-level` | `--l` | No | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) |
+| `--no-cleanup` | - | No | Do not clean up AWS resources after scanning |
 
-With further testing, I settled on a combination of SNS, ECR-Public, and ECR-Private services running in US-East-1 in ~40%/50%/10% configuration split with ~700 threads. The machine I used was a 2020 Macbook Air (M1 and 16 GB RAM). This configuration yielded on average ~1100 calls/sec, though the actual number of calls can fluctuate significantly depending on a variety of factors including network connectivity. Under these configurations, I did occasionally throw an exception on a thread from throttling...but I have subsequently configured additional re-try attempts (4 -> 7) via botocore that will eliminate this issue with a minor performance trade-off.
+### Web Dashboard
 
-#### Computational Difficulty
-To attempt every possible Account ID in AWS (1,000,000,000,000) would require an infeasible amount of time given only one account. Even assuming absolute efficiency*, over the course of a day an attacker will only be able to make 95,040,000 validation checks from their local machine. Over 30 days, this is 2,851,200,000 validation checks and we are still over 28 years away from enumerating every valid AWS Account ID. Fortunately, there is nothing stopping us from registering many AWS accounts and automating this scan. While there is an initial limit of 20 accounts per AWS organization, I was able to get this limit increased for my Organization via console self-service and approval from an AWS representative. The approval occured without any further questions and now I'm off to automating this writ large. Again, assuming absolute efficiency, the 28 years of scanning to exhaust the account ID space could potentially be reduced down a few days or hours.
+Start the FastAPI server:
+
+```bash
+quiet-riot-server
+```
+
+Or use uvicorn directly:
+
+```bash
+uvicorn quiet_riot.api.server:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Then open http://localhost:8000 in your browser.
+
+#### API Endpoints
+
+- `GET /` - Dashboard UI
+- `GET /api/scan-types` - List available scan types
+- `POST /api/scans` - Start a new scan
+- `GET /api/scans/{scan_id}` - Get scan status
+- `GET /api/scans` - List all scans
+- `POST /api/credentials` - Set AWS credentials (profile or ARN)
+- `GET /api/credentials` - Get current credential status
+- `GET /api/infrastructure` - Get AWS infrastructure resources
+- `POST /api/infrastructure/cleanup` - Clean up all AWS resources
+- `GET /health` - Health check
+
+#### API Credentials Configuration
+
+Configure credentials via API:
+
+```bash
+# Set credentials using profile name
+curl -X POST http://localhost:8000/api/credentials \
+  -H "Content-Type: application/json" \
+  -d '{"profile": "my-profile"}'
+
+# Set credentials using ARN
+curl -X POST http://localhost:8000/api/credentials \
+  -H "Content-Type: application/json" \
+  -d '{"arn": "arn:aws:iam::123456789012:role/MyRole"}'
+
+# Check credential status
+curl http://localhost:8000/api/credentials
+```
+
+## 📊 Scan Types
+
+1. **AWS Account IDs** - Enumerate valid AWS account IDs
+2. **Microsoft 365 Domains** - Check if M365 domain exists
+3. **AWS Services Footprinting** - Footprint AWS services
+4. **AWS Root User Email** - Enumerate AWS root user email addresses
+5. **AWS IAM Principals** - Enumerate IAM roles/users
+6. **Microsoft 365 Users** - Enumerate M365 user emails
+7. **Google Workspace Users** - Enumerate Google Workspace emails
+
+## 📁 Project Structure
+
+```
+quiet_riot/
+├── cli/                    # CLI interface
+│   └── main.py            # CLI entry point
+├── api/                    # FastAPI application
+│   ├── server.py          # FastAPI server
+│   └── templates/         # HTML templates
+│       └── dashboard.html # Web dashboard
+├── core/                   # Core business logic
+│   ├── models.py          # Data models
+│   ├── scanner.py         # Main scanner class
+│   ├── enumeration_handlers.py  # Enumeration logic
+│   ├── wordlist_handler.py
+│   └── result_handler.py
+├── enumeration/            # Low-level enumeration modules
+│   └── ...
+└── aws_credentials.py      # AWS credentials management
+```
+
+## ✨ Key Features
+
+### 1. Modern Credentials Management
+
+- **Profile Support**: Use existing AWS profiles from `~/.aws/config`
+- **ARN Support**: Automatically create profiles from IAM role ARNs
+- **Automatic Profile Creation**: Profiles created from ARNs are reusable
+- **Credential Validation**: Validates credentials before use and shows authenticated ARN
+- **SSO Ready**: Infrastructure in place for future SSO profile support
+
+### 2. Dual Interface
+
+- **CLI**: Clean command-line interface for automation
+- **Web Dashboard**: Modern, interactive UI for exploration
+
+### 3. Modern Build System
+
+- `pyproject.toml` replaces `setup.py`
+- Supports both `pipx` and `pip`
+- Configured code quality tools (Black, Ruff, MyPy)
+
+### 4. Better Code Organization
+
+- Separation of concerns (CLI, API, Core)
+- Reusable business logic
+- Type hints and data models
+- Proper error handling
+
+### 5. Improved Practices
+
+- Logging instead of print statements
+- Configuration singleton pattern
+- Resource management with cleanup
+- Retry logic with exponential backoff
+
+## 🔧 Development
+
+### Code Quality
+
+```bash
+# Format code
+ruff format .
+
+# Lint code
+ruff check .
+
+# Fix linting issues
+ruff check . --fix
+
+# Type check
+mypy quiet_riot
+
+# Run tests
+pytest
+```
+
+### Using Makefile
+
+```bash
+make lint        # Run linting
+make format      # Format code
+make lint-fix    # Auto-fix issues
+make test        # Run tests
+make all         # Run all checks
+```
+
+### Pre-commit Hooks
+
+Pre-commit hooks run automatically on `git commit`:
+
+- **Ruff linting** - Checks code quality
+- **Ruff formatting** - Formats code
+- **File checks** - Trailing whitespace, end of file, etc.
+- **Security checks** - Bandit security scanning
+
+Install pre-commit hooks:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+## 📈 Performance & Throttling
+
+After performing extensive analysis of scaling methods using the AWS Python (Boto3) SDK, I was able to determine that the bottleneck for scanning (at least for Python and awscli-based tools) is I/O capacity of a single-threaded Python application. After modifying the program to run with multiple threads, I was able to trigger exceptions in individual threads due to throttling by the various AWS APIs.
+
+With further testing, I settled on a combination of SNS, ECR-Public, and ECR-Private services running in US-East-1 in ~40%/50%/10% configuration split with ~700 threads. The machine I used was a 2020 Macbook Air (M1 and 16 GB RAM). This configuration yielded on average ~1100 calls/sec, though the actual number of calls can fluctuate significantly depending on a variety of factors including network connectivity.
+
+### Computational Difficulty
+
+To attempt every possible Account ID in AWS (1,000,000,000,000) would require an infeasible amount of time given only one account. Even assuming absolute efficiency*, over the course of a day an attacker will only be able to make 95,040,000 validation checks from their local machine. Over 30 days, this is 2,851,200,000 validation checks and we are still over 28 years away from enumerating every valid AWS Account ID.
 
 *~1100 API calls/check per second in perpetuity per account and never repeating a guessed Account ID.
 
-## Potential Supported AWS Services
+## 🛠️ Configuration
 
-| # | AWS Service | Description | API Limits | Resource Pricing | Enumeration Capability |
-| --- | ----------- | ----------- | --------------- |--------------- | ---------- |
-| 1 | __SNS__ | Managed Serverless Notification Service | Unknown | Unknown | Yes |
-| 2 | __KMS__ | Encryption Key Management Service | Unknown | Unknown | Yes |
-| 3 | __SecretsManager__ | Managed Secret Store | Unknown | Unknown | Yes |
-| 4 | __CodeArtifact__ | Managed Source Code Repository | Unknown | Unknown | Yes |
-| 5 | __ECR Public__ | Managed Container Registry | Unknown | Unknown | Yes |
-| 6 | __ECR Private__ | Managed Container Registry | Unknown | Unknown | Yes |
-| 7 | __Lambda__ | Managed Serverless Function | Unknown | Unknown | Yes |
-| 8 | __s3__ | Managed Serverless Object Store | Unknown | Unknown | Yes |
-| 9 | __SES__ | SMTP Automation Service | Unknown | Unknown | Unknown |
-| 10 | __ACM__ | Private Certificate Authority | Unknown | Unknown | Unknown |
-| 11 | __CodeBuild__ | Software Build Agent | Unknown | Unknown | Unknown |
-| 12 | __AWS Backup__ | Managed Backup Service | Unknown | Unknown | Unknown |
-| 13 | __Cloud9__ | Managed IDE | Unknown | Unknown | Unknown |
-| 14 | __Glue__ | Managed ETL Job Service | Unknown | Unknown | Unknown |
-| 15 | __EKS__ | Managed K8s Service | Unknown | Unknown | Unknown |
-| 16 | __Lex V2__ | Managed NLP Service | Unknown | Unknown | Unknown |
-| 17 | __CloudWatch Logs__ | Managed Log Pipeline/Monitoring | Unknown | Unknown | Unknown |
-| 18 | __VPC Endpoints__ | Managed Virtual Network | Unknown | Unknown | Unknown |
-| 19 | __Elemental MediaStore__ | Unknown | Unknown | Unknown | Unknown |
-| 20 | __OpenSearch__ | Managed ElasticSearch | Unknown | Unknown | Unknown |
-| 21 | __EventBridge__ | Managed Serverless Event Hub | Unknown | Unknown | Unknown |
-| 22 | __EventBridge Schemas__ | Managed Serverless Event Hub | Unknown | Unknown | Unknown |
-| 23 | __IoT__ | Internet-of-Things Management | Unknown | Unknown | Unknown |
-| 24 | __s3 Glacier__ | Cold Object Storage | Unknown | Unknown | Unknown |
-| 25 | __ECS__ | Managed Container Orchestration | Unknown | Unknown | Unknown |
-| 26 | __Serverless Application Repository__ | Managed Source Code Repository | Unknown | Unknown | No |
-| 27 | __SQS__ | Managed Serverless Queueing Service | Unknown | Unknown | No |
-| 28 | __EFS__ | Managed Serverless Elastic File System | Unknown | Unknown | No |
+### AWS Credentials
+
+Quiet Riot uses the AWS credentials manager to handle authentication:
+
+1. **Profile-based**: Uses profiles from `~/.aws/config` or `~/.aws/credentials`
+2. **ARN-based**: Creates assume-role profiles automatically from IAM role ARNs
+3. **Default fallback**: Tries `default` profile if no credentials specified
+
+The credentials manager validates sessions and provides clear error messages if authentication fails.
+
+## 🔄 Migration Notes
+
+### From Legacy `main.py`
+
+The old `main.py` is still present for backward compatibility, but new code should use:
+
+- **CLI**: `quiet_riot.cli.main.main()` or `quiet-riot` command
+- **Core logic**: `quiet_riot.core.scanner.Scanner`
+- **Config**: `quiet_riot.config.get_config()`
+- **Credentials**: `quiet_riot.aws_credentials.get_credentials_manager()`
+
+### Command Line Changes
+
+- Old: `quiet_riot --scan_type 1 --profile my-profile`
+- New: `quiet-riot --scan 1 --profile my-profile`
+
+The new CLI is non-interactive and requires all parameters upfront.
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📚 Additional Documentation
+
+- [INSTALLATION.md](INSTALLATION.md) - Detailed installation instructions
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Development guide
+- [CODE_REVIEW.md](CODE_REVIEW.md) - Code review guidelines
+- [.vscode/README.md](.vscode/README.md) - VS Code setup and configuration
+
+## 🔗 Links
+
+- **Homepage**: https://github.com/righteousgambit/quiet-riot
+- **Issues**: https://github.com/righteousgambit/quiet-riot/issues
+- **Documentation**: https://github.com/righteousgambit/quiet-riot#readme
