@@ -41,6 +41,10 @@ API_TOKEN = os.getenv("QUIET_RIOT_API_TOKEN")
 MAX_EMAIL_RESPONSE = int(os.getenv("QUIET_RIOT_MAX_EMAILS", "50000"))
 # Hold references to fire-and-forget scan tasks so they aren't garbage-collected.
 _scan_tasks: set[asyncio.Task] = set()
+# Serialize scan execution: constructing a Scanner / running a scan mutates the
+# process-wide Config singleton (account + scan_objects) that the enumerator
+# worker threads read live, so two concurrent scans would corrupt each other.
+_scan_lock = asyncio.Lock()
 
 
 def require_token(authorization: str | None = Header(default=None)) -> None:
@@ -310,13 +314,15 @@ async def start_scan(scan_request: ScanRequest):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid credentials in scan request: {e}") from e
 
-    # Use scan-specific session if provided, otherwise use global scanner
+    # Determine which AWS session this scan runs under. The Scanner itself is
+    # constructed inside the serialized _execute() below, because constructing it
+    # resets the process-wide Config singleton.
     if scan_session:
-        scan_scanner = Scanner(scan_session)
+        effective_session = scan_session
     elif scanner is None:
         raise HTTPException(status_code=503, detail="Scanner not initialized. Check AWS credentials.")
     else:
-        scan_scanner = scanner
+        effective_session = scanner.session
 
     try:
         scan_type = ScanType(str(scan_request.scan_type))
@@ -421,28 +427,35 @@ async def start_scan(scan_request: ScanRequest):
             start_time=datetime.now(),
         )
 
+        def _do_scan():
+            # Constructing the Scanner (resets Config) + running the scan, both in
+            # one worker thread so the event loop is never blocked.
+            s = Scanner(effective_session)
+            return s, s.run_scan(scan_config, cleanup=False)
+
         async def _execute() -> None:
-            try:
-                result = await asyncio.to_thread(scan_scanner.run_scan, scan_config, False)
-                result.scan_id = job_id
-                active_scans[job_id] = result
-                if scan_scanner.resource_mgr.resources_created:
-                    infrastructure_resources[job_id] = {
-                        "ecr_public_repo": scan_scanner.resource_mgr.ecr_public_repo,
-                        "ecr_private_repo": scan_scanner.resource_mgr.ecr_private_repo,
-                        "sns_topic_arn": scan_scanner.resource_mgr.sns_topic_arn,
-                        "s3_bucket": scan_scanner.resource_mgr.s3_bucket,
-                        "canonical_id": scan_scanner.resource_mgr.canonical_id,
-                        "scan_id": job_id,
-                        "scan_type": result.scan_type.value,
-                        "created_at": result.start_time.isoformat(),
-                    }
-            except Exception as exc:
-                logger.exception(f"Scan {job_id} failed: {exc}")
-                failed = active_scans[job_id]
-                failed.status = "failed"
-                failed.error = str(exc)
-                failed.end_time = datetime.now()
+            async with _scan_lock:  # one scan at a time (shared Config singleton)
+                try:
+                    scan_scanner, result = await asyncio.to_thread(_do_scan)
+                    result.scan_id = job_id
+                    active_scans[job_id] = result
+                    if scan_scanner.resource_mgr.resources_created:
+                        infrastructure_resources[job_id] = {
+                            "ecr_public_repo": scan_scanner.resource_mgr.ecr_public_repo,
+                            "ecr_private_repo": scan_scanner.resource_mgr.ecr_private_repo,
+                            "sns_topic_arn": scan_scanner.resource_mgr.sns_topic_arn,
+                            "s3_bucket": scan_scanner.resource_mgr.s3_bucket,
+                            "canonical_id": scan_scanner.resource_mgr.canonical_id,
+                            "scan_id": job_id,
+                            "scan_type": result.scan_type.value,
+                            "created_at": result.start_time.isoformat(),
+                        }
+                except Exception as exc:
+                    logger.exception(f"Scan {job_id} failed: {exc}")
+                    failed = active_scans[job_id]
+                    failed.status = "failed"
+                    failed.error = str(exc)
+                    failed.end_time = datetime.now()
 
         task = asyncio.create_task(_execute())
         _scan_tasks.add(task)
@@ -735,101 +748,70 @@ async def cleanup_infrastructure():
         raise HTTPException(status_code=503, detail="No scanner initialized")
 
     try:
-        # Clean up resources from the scanner's resource manager
-        success = scanner.resource_mgr.cleanup_all(force=True)
-
-        # Also clean up any orphaned resources by querying AWS directly
         session = scanner.session
         cleaned_count = 0
 
-        # Clean up ECR Public repositories
-        try:
-            ecr_public = session.client("ecr-public")
-            repos = ecr_public.describe_repositories()
-            for repo in repos.get("repositories", []):
-                if "quiet-riot-public-repo" in repo["repositoryName"]:
-                    try:
-                        ecr_public.delete_repository(repositoryName=repo["repositoryName"])
-                        cleaned_count += 1
-                    except Exception as e:
-                        logger.warning(f"Error deleting ECR Public repo {repo['repositoryName']}: {e}")
-        except Exception as e:
-            logger.debug(f"Error checking ECR Public: {e}")
+        # The current scanner's own tracked resources.
+        success = scanner.resource_mgr.cleanup_all(force=True)
 
-        # Clean up ECR Private repositories
-        try:
-            ecr_private = session.client("ecr")
-            repos = ecr_private.describe_repositories()
-            for repo in repos.get("repositories", []):
-                if "quiet-riot-private-repo" in repo["repositoryName"]:
-                    try:
-                        ecr_private.delete_repository(repositoryName=repo["repositoryName"])
-                        cleaned_count += 1
-                    except Exception as e:
-                        logger.warning(f"Error deleting ECR Private repo {repo['repositoryName']}: {e}")
-        except Exception as e:
-            logger.debug(f"Error checking ECR Private: {e}")
+        # Plus the EXACT resources recorded for each tracked scan. We delete by
+        # the names we created — never a substring sweep, which would destroy a
+        # concurrent scan's (or a bystander's) "quiet-riot-*" resources.
+        ecr_public = session.client("ecr-public")
+        ecr_private = session.client("ecr")
+        sns = session.client("sns")
+        s3 = session.client("s3")
 
-        # Clean up SNS topics
-        try:
-            sns = session.client("sns")
-            topics = sns.list_topics()
-            for topic in topics.get("Topics", []):
-                if "quiet-riot-sns-topic" in topic["TopicArn"]:
-                    try:
-                        sns.delete_topic(TopicArn=topic["TopicArn"])
-                        cleaned_count += 1
-                    except Exception as e:
-                        logger.warning(f"Error deleting SNS topic {topic['TopicArn']}: {e}")
-        except Exception as e:
-            logger.debug(f"Error checking SNS: {e}")
+        for resources in list(infrastructure_resources.values()):
+            if resources.get("ecr_public_repo"):
+                try:
+                    ecr_public.delete_repository(repositoryName=resources["ecr_public_repo"], force=True)
+                    cleaned_count += 1
+                except Exception as e:
+                    logger.warning(f"Error deleting ECR Public repo {resources['ecr_public_repo']}: {e}")
+            if resources.get("ecr_private_repo"):
+                try:
+                    ecr_private.delete_repository(repositoryName=resources["ecr_private_repo"], force=True)
+                    cleaned_count += 1
+                except Exception as e:
+                    logger.warning(f"Error deleting ECR Private repo {resources['ecr_private_repo']}: {e}")
+            if resources.get("sns_topic_arn"):
+                try:
+                    sns.delete_topic(TopicArn=resources["sns_topic_arn"])
+                    cleaned_count += 1
+                except Exception as e:
+                    logger.warning(f"Error deleting SNS topic {resources['sns_topic_arn']}: {e}")
+            if resources.get("s3_bucket"):
+                bucket = resources["s3_bucket"]
+                try:
+                    paginator = s3.get_paginator("list_objects_v2")
+                    for page in paginator.paginate(Bucket=bucket):
+                        objs = [{"Key": o["Key"]} for o in page.get("Contents", [])]
+                        if objs:
+                            s3.delete_objects(Bucket=bucket, Delete={"Objects": objs})
+                    s3.delete_bucket(Bucket=bucket)
+                    cleaned_count += 1
+                except Exception as e:
+                    logger.warning(f"Error deleting S3 bucket {bucket}: {e}")
 
-        # Clean up S3 buckets
+        # Best-effort: remove the account-level ECR registry policy a scan sets.
+        # NOTE: this overwrites a pre-existing customer registry policy if one
+        # existed (the scan already overwrote it). Save/restore is a follow-up.
         try:
-            s3 = session.client("s3")
-            buckets = s3.list_buckets()
-            for bucket in buckets.get("Buckets", []):
-                if "quiet-riot-bucket" in bucket["Name"]:
-                    try:
-                        # Empty bucket first
-                        bucket_name = bucket["Name"]
-                        try:
-                            objects = s3.list_objects_v2(Bucket=bucket_name)
-                            if "Contents" in objects:
-                                for obj in objects["Contents"]:
-                                    s3.delete_object(Bucket=bucket_name, Key=obj["Key"])
-                        except Exception:
-                            pass
-                        s3.delete_bucket(Bucket=bucket_name)
-                        cleaned_count += 1
-                    except Exception as e:
-                        logger.warning(f"Error deleting S3 bucket {bucket['Name']}: {e}")
+            ecr_private.delete_registry_policy()
         except Exception as e:
-            logger.debug(f"Error checking S3: {e}")
+            logger.debug(f"No ECR registry policy to delete (or already gone): {e}")
 
-        # Clear infrastructure tracking
         infrastructure_resources.clear()
 
-        if success and cleaned_count > 0:
-            return {
-                "status": "success",
-                "message": f"All infrastructure resources cleaned up successfully ({cleaned_count} resources removed)",
-                "resources_cleaned": cleaned_count,
-            }
-        elif success:
-            return {
-                "status": "success",
-                "message": "All infrastructure resources cleaned up successfully",
-            }
-        else:
-            return {
-                "status": "partial",
-                "message": f"Some resources may not have been cleaned up ({cleaned_count} resources removed)",
-                "resources_cleaned": cleaned_count,
-            }
+        return {
+            "status": "success" if success else "partial",
+            "message": f"Cleaned up {cleaned_count} tracked resource(s).",
+            "resources_cleaned": cleaned_count,
+        }
     except Exception as e:
         logger.exception(f"Error cleaning up infrastructure: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/health")

@@ -11,6 +11,8 @@ real AWS (moto cannot mock ECR-Public).
 """
 
 import contextlib
+import json
+import time
 import uuid
 
 import pytest
@@ -105,6 +107,59 @@ def test_live_s3acl_invalid_email_returns_fail(live_session):
 # Repeats the known-valid id enough times that the random load-balancer routes
 # it through the (formerly broken) ECR-Public path with overwhelming probability.
 # --------------------------------------------------------------------------- #
+def _retry_pass(checker, principal, session, tries=6, delay=2):
+    """Retry a positive check briefly to absorb IAM eventual consistency."""
+    result = "Fail"
+    for _ in range(tries):
+        result = checker(principal, session)
+        if result == "Pass":
+            return result
+        time.sleep(delay)
+    return result
+
+
+def test_live_detects_real_vs_fake_role_and_user(live_session):
+    """The core technique must distinguish a REAL role/user ARN from a FAKE one,
+    not just account ids. Creates real IAM principals and verifies Pass/Fail."""
+    account = live_session._qr_account_id
+    iam = live_session.client("iam")
+    s = _suffix()
+    role_name = f"quiet-riot-test-role-{s}"
+    user_name = f"quiet-riot-test-user-{s}"
+    trust = json.dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Principal": {"Service": "ec2.amazonaws.com"}, "Action": "sts:AssumeRole"}
+            ],
+        }
+    )
+    iam.create_role(RoleName=role_name, AssumeRolePolicyDocument=trust)
+    iam.create_user(UserName=user_name)
+
+    ecrpub = live_session.client("ecr-public", region_name="us-east-1")
+    repo = f"quiet-riot-public-repo-test-{s}"
+    ecrpub.create_repository(repositoryName=repo)
+    configure_scan(account_no=account, ecr_pub=repo)
+
+    real_role = f"arn:aws:iam::{account}:role/{role_name}"
+    real_user = f"arn:aws:iam::{account}:user/{user_name}"
+    fake_role = f"arn:aws:iam::{account}:role/quiet-riot-nope-{uuid.uuid4().hex[:8]}"
+    fake_user = f"arn:aws:iam::{account}:user/quiet-riot-nope-{uuid.uuid4().hex[:8]}"
+    try:
+        assert _retry_pass(ecrpubenum.ecr_princ_checker, real_role, live_session) == "Pass"
+        assert _retry_pass(ecrpubenum.ecr_princ_checker, real_user, live_session) == "Pass"
+        assert ecrpubenum.ecr_princ_checker(fake_role, live_session) == "Fail"
+        assert ecrpubenum.ecr_princ_checker(fake_user, live_session) == "Fail"
+    finally:
+        with contextlib.suppress(Exception):
+            ecrpub.delete_repository(repositoryName=repo, force=True)
+        with contextlib.suppress(Exception):
+            iam.delete_role(RoleName=role_name)
+        with contextlib.suppress(Exception):
+            iam.delete_user(UserName=user_name)
+
+
 def test_live_full_account_id_scan(live_session, tmp_path):
     from quiet_riot.core.scanner import Scanner
 

@@ -31,8 +31,14 @@ def test_live_m365_domain_nonexistent(handler):
 
 
 def test_live_m365_user_invalid_does_not_crash(handler):
-    """An obviously-invalid user must return cleanly (no exception bubbling)."""
-    valid, checked = handler.scan_microsoft_365_user("not-a-real-user@example.invalid")
+    """An obviously-invalid user returns cleanly, OR (when O365 is rate-limiting us)
+    raises ThrottlingError — which is the correct, non-silent throttle behavior."""
+    from quiet_riot.core.enumeration_handlers import ThrottlingError
+
+    try:
+        valid, checked = handler.scan_microsoft_365_user("not-a-real-user@example.invalid")
+    except ThrottlingError:
+        pytest.skip("O365 is throttling right now; throttling correctly raised instead of being swallowed")
     assert checked == 1
     assert isinstance(valid, list)
 

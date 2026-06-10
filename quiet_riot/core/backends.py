@@ -33,15 +33,10 @@ class LocalThreadPoolBackend:
     name = "local"
 
     def run(self, wordlist_path: str, session, threads: int) -> list[str]:
-        results_file = loadbalancer.threader(
+        return loadbalancer.threader(
             loadbalancer.getter(thread=threads, wordlist=wordlist_path),
             session=session,
         )
-        valid: list[str] = []
-        if results_file and os.path.exists(results_file):
-            with open(results_file) as f:
-                valid = [line.strip() for line in f if line.strip()]
-        return valid
 
 
 class DistributedBackend:

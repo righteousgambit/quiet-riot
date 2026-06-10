@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 HTTP_TIMEOUT = float(os.getenv("QUIET_RIOT_HTTP_TIMEOUT", "15"))
 
 
+class ThrottlingError(Exception):
+    """Raised when an upstream identity API throttles us mid-scan."""
+
+
 class EnumerationHandler:
     """Handles enumeration for different scan types."""
 
@@ -42,16 +46,9 @@ class EnumerationHandler:
             Tuple of (valid_accounts, total_scanned)
         """
         logger.info("Starting AWS Account ID enumeration")
-        results_file = loadbalancer.threader(
+        valid_accounts = loadbalancer.threader(
             loadbalancer.getter(thread=threads, wordlist=wordlist_path), session=self.session
         )
-
-        # Load results
-        valid_accounts = []
-        if results_file and os.path.exists(results_file):
-            with open(results_file) as f:
-                valid_accounts = [line.strip() for line in f if line.strip()]
-
         total_scanned = self._count_wordlist_items(wordlist_path)
         return valid_accounts, total_scanned
 
@@ -82,16 +79,9 @@ class EnumerationHandler:
                 f.write(f"{arn}\n")
 
         try:
-            results_file = loadbalancer.threader(
+            valid_roles = loadbalancer.threader(
                 loadbalancer.getter(thread=threads, wordlist=temp_wordlist), session=self.session
             )
-
-            # Load results
-            valid_roles = []
-            if results_file and os.path.exists(results_file):
-                with open(results_file) as f:
-                    valid_roles = [line.strip() for line in f if line.strip()]
-
             return valid_roles, len(role_names)
         finally:
             # Cleanup temp file
@@ -125,16 +115,9 @@ class EnumerationHandler:
                 f.write(f"{arn}\n")
 
         try:
-            results_file = loadbalancer.threader(
+            valid_users = loadbalancer.threader(
                 loadbalancer.getter(thread=threads, wordlist=temp_wordlist), session=self.session
             )
-
-            # Load results
-            valid_users = []
-            if results_file and os.path.exists(results_file):
-                with open(results_file) as f:
-                    valid_users = [line.strip() for line in f if line.strip()]
-
             return valid_users, len(user_names)
         finally:
             # Cleanup temp file
@@ -248,13 +231,17 @@ class EnumerationHandler:
                 valid_emails.append(email)
 
             if throttling:
+                # Abort rather than emit false positives. Propagate past the
+                # broad except so the scan fails loudly instead of swallowing it.
                 logger.error("O365 is responding with false positives. Retry the scan in 1 minute.")
-                raise Exception("O365 throttling detected")
+                raise ThrottlingError("O365 throttling detected")
 
             if timeout:
                 time.sleep(int(timeout))
 
             return valid_emails, 1
+        except ThrottlingError:
+            raise
         except Exception as e:
             logger.error(f"Error checking Microsoft 365 user {email}: {e}")
             return [], 1
