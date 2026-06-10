@@ -13,6 +13,9 @@ from .enumeration import loadbalancer, s3aclenum
 
 logger = logging.getLogger(__name__)
 
+# Bound every outbound HTTP request so a hung endpoint can't stall a scan.
+HTTP_TIMEOUT = float(os.getenv("QUIET_RIOT_HTTP_TIMEOUT", "15"))
+
 
 class EnumerationHandler:
     """Handles enumeration for different scan types."""
@@ -168,7 +171,7 @@ class EnumerationHandler:
 
         url = f"https://login.microsoftonline.com/getuserrealm.srf?login=user@{domain_name}"
         try:
-            response = requests.get(url)  # nosec B113
+            response = requests.get(url, timeout=HTTP_TIMEOUT)  # nosec B113
             response_text = response.text
 
             valid_managed = re.search('"NameSpaceType":"Managed",', response_text)
@@ -221,7 +224,7 @@ class EnumerationHandler:
 
         try:
             body = f'{{"Username":"{email}"}}'
-            response = requests.post(self.ms_url, data=body)  # nosec B113
+            response = requests.post(self.ms_url, data=body, timeout=HTTP_TIMEOUT)  # nosec B113
             response_text = response.text
 
             valid_response = re.search('"IfExistsResult":0,', response_text)
@@ -270,7 +273,7 @@ class EnumerationHandler:
 
         try:
             params = {"email": email}
-            response = requests.get("https://mail.google.com/mail/gxlu", params=params)  # nosec B113
+            response = requests.get("https://mail.google.com/mail/gxlu", params=params, timeout=HTTP_TIMEOUT)  # nosec B113
             response_cookies = response.cookies
 
             if len(response_cookies) == 1:

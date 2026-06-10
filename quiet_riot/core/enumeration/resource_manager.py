@@ -4,6 +4,7 @@ Resource manager for AWS resources created during scanning.
 Ensures proper cleanup of all created resources.
 """
 
+import contextlib
 import logging
 
 logger = logging.getLogger(__name__)
@@ -90,91 +91,68 @@ class ResourceManager:
         return success
 
     def _cleanup_s3_bucket(self) -> bool:
-        """Clean up S3 bucket."""
+        """Delete only the bucket this manager created (paginated empty first)."""
+        if not self.s3_bucket:
+            return True
+        s3 = self.session.client("s3")
         try:
-            s3 = self.session.client("s3")
-            buckets = s3.list_buckets()
-
-            for bucket in buckets.get("Buckets", []):
-                if "quiet-riot-bucket" in bucket["Name"]:
-                    try:
-                        # Empty bucket first (required for deletion)
-                        bucket_name = bucket["Name"]
-                        try:
-                            objects = s3.list_objects_v2(Bucket=bucket_name)
-                            if "Contents" in objects:
-                                for obj in objects["Contents"]:
-                                    s3.delete_object(Bucket=bucket_name, Key=obj["Key"])
-                        except Exception as e:
-                            logger.debug(f"Error listing/emptying bucket {bucket_name}: {e}")
-
-                        s3.delete_bucket(Bucket=bucket_name)
-                        logger.info(f"Deleted S3 bucket: {bucket_name}")
-                        return True
-                    except Exception as e:
-                        logger.warning(f"Error deleting S3 bucket {bucket['Name']}: {e}")
-                        return False
+            paginator = s3.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket=self.s3_bucket):
+                objects = [{"Key": o["Key"]} for o in page.get("Contents", [])]
+                if objects:
+                    s3.delete_objects(Bucket=self.s3_bucket, Delete={"Objects": objects})
+            s3.delete_bucket(Bucket=self.s3_bucket)
+            logger.info(f"Deleted S3 bucket: {self.s3_bucket}")
+            return True
+        except s3.exceptions.NoSuchBucket:
+            logger.debug(f"S3 bucket already gone: {self.s3_bucket}")
             return True
         except Exception as e:
-            logger.error(f"Error during S3 bucket cleanup: {e}")
+            logger.warning(f"Error deleting S3 bucket {self.s3_bucket}: {e}")
             return False
 
     def _cleanup_ecr_public_repo(self) -> bool:
-        """Clean up ECR Public repository."""
+        """Delete only the ECR Public repository this manager created."""
+        if not self.ecr_public_repo:
+            return True
+        ecr = self.session.client("ecr-public")
         try:
-            ecr_public = self.session.client("ecr-public")
-            repos = ecr_public.describe_repositories()
-
-            for repo in repos.get("repositories", []):
-                if "quiet-riot-public-repo" in repo["repositoryName"]:
-                    try:
-                        ecr_public.delete_repository(repositoryName=repo["repositoryName"])
-                        logger.info(f"Deleted ECR Public repository: {repo['repositoryName']}")
-                        return True
-                    except Exception as e:
-                        logger.warning(f"Error deleting ECR Public repo {repo['repositoryName']}: {e}")
-                        return False
+            ecr.delete_repository(repositoryName=self.ecr_public_repo, force=True)
+            logger.info(f"Deleted ECR Public repository: {self.ecr_public_repo}")
+            return True
+        except ecr.exceptions.RepositoryNotFoundException:
             return True
         except Exception as e:
-            logger.error(f"Error during ECR Public cleanup: {e}")
+            logger.warning(f"Error deleting ECR Public repo {self.ecr_public_repo}: {e}")
             return False
 
     def _cleanup_ecr_private_repo(self) -> bool:
-        """Clean up ECR Private repository."""
+        """Delete only the ECR Private repo this manager created (+ its registry policy)."""
+        if not self.ecr_private_repo:
+            return True
+        ecr = self.session.client("ecr")
+        # The scan sets an account-level registry policy; remove it best-effort.
+        with contextlib.suppress(Exception):
+            ecr.delete_registry_policy()
         try:
-            ecr_private = self.session.client("ecr")
-            repos = ecr_private.describe_repositories()
-
-            for repo in repos.get("repositories", []):
-                if "quiet-riot-private-repo" in repo["repositoryName"]:
-                    try:
-                        ecr_private.delete_repository(repositoryName=repo["repositoryName"])
-                        logger.info(f"Deleted ECR Private repository: {repo['repositoryName']}")
-                        return True
-                    except Exception as e:
-                        logger.warning(f"Error deleting ECR Private repo {repo['repositoryName']}: {e}")
-                        return False
+            ecr.delete_repository(repositoryName=self.ecr_private_repo, force=True)
+            logger.info(f"Deleted ECR Private repository: {self.ecr_private_repo}")
+            return True
+        except ecr.exceptions.RepositoryNotFoundException:
             return True
         except Exception as e:
-            logger.error(f"Error during ECR Private cleanup: {e}")
+            logger.warning(f"Error deleting ECR Private repo {self.ecr_private_repo}: {e}")
             return False
 
     def _cleanup_sns_topic(self) -> bool:
-        """Clean up SNS topic."""
+        """Delete only the SNS topic this manager created (delete_topic is idempotent)."""
+        if not self.sns_topic_arn:
+            return True
+        sns = self.session.client("sns")
         try:
-            sns = self.session.client("sns")
-            topics = sns.list_topics()
-
-            for topic in topics.get("Topics", []):
-                if "quiet-riot-sns-topic" in topic["TopicArn"]:
-                    try:
-                        sns.delete_topic(TopicArn=topic["TopicArn"])
-                        logger.info(f"Deleted SNS topic: {topic['TopicArn']}")
-                        return True
-                    except Exception as e:
-                        logger.warning(f"Error deleting SNS topic {topic['TopicArn']}: {e}")
-                        return False
+            sns.delete_topic(TopicArn=self.sns_topic_arn)
+            logger.info(f"Deleted SNS topic: {self.sns_topic_arn}")
             return True
         except Exception as e:
-            logger.error(f"Error during SNS topic cleanup: {e}")
+            logger.warning(f"Error deleting SNS topic {self.sns_topic_arn}: {e}")
             return False
