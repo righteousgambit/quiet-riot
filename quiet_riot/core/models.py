@@ -4,10 +4,10 @@ Data models for Quiet Riot.
 
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 
-class ScanType(str, Enum):
+class ScanType(StrEnum):
     """Enumeration of supported scan types."""
 
     AWS_ACCOUNT_IDS = "1"
