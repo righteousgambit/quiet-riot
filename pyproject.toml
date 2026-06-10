@@ -46,6 +46,7 @@ dev = [
     "moto[ecr,sns,s3,sts]>=5.0.0",
     "types-requests>=2.28.0",
     "httpx>=0.24.0",
+    "pytest-timeout>=2.1.0",
     "pre-commit>=3.0.0",
 ]
 
@@ -147,6 +148,10 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=quiet_riot --cov-report=html --cov-report=term-missing"
+# Backstop so a hung live test (e.g. a stalled AWS/SaaS socket) fails fast with a
+# traceback instead of stalling CI for the whole job timeout.
+timeout = 180
+timeout_method = "thread"
 
 [tool.coverage.run]
 source = ["quiet_riot"]
