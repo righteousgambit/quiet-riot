@@ -60,3 +60,23 @@ def test_cleanup_removes_s3_sns_ecr_private(moto_session):
 def test_cleanup_noop_when_nothing_created(moto_session):
     rm = ResourceManager(moto_session)
     assert rm.cleanup_all(force=True) is True
+
+
+def test_cleanup_only_deletes_tracked_resource_not_bystanders(moto_session):
+    """Regression: cleanup must delete ONLY this manager's bucket.
+
+    Previously it listed every ``quiet-riot-bucket*`` and deleted matches, so a
+    concurrent scan's bucket would be destroyed. A bystander bucket must survive.
+    """
+    s3 = moto_session.client("s3")
+    s3.create_bucket(Bucket="quiet-riot-bucket-mine")
+    s3.create_bucket(Bucket="quiet-riot-bucket-other-scan")  # a concurrent scan's bucket
+
+    rm = ResourceManager(moto_session)
+    rm.s3_bucket = "quiet-riot-bucket-mine"
+    rm.resources_created = True
+    rm.cleanup_all(force=True)
+
+    remaining = {b["Name"] for b in s3.list_buckets().get("Buckets", [])}
+    assert "quiet-riot-bucket-mine" not in remaining
+    assert "quiet-riot-bucket-other-scan" in remaining, "bystander scan's bucket must not be deleted"
