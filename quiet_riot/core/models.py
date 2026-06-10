@@ -1,0 +1,68 @@
+"""
+Data models for Quiet Riot.
+"""
+
+from dataclasses import dataclass
+from datetime import datetime
+from enum import StrEnum
+
+
+class ScanType(StrEnum):
+    """Enumeration of supported scan types."""
+
+    AWS_ACCOUNT_IDS = "1"
+    MICROSOFT_365_DOMAINS = "2"
+    AWS_SERVICES_FOOTPRINTING = "3"
+    AWS_ROOT_USER_EMAIL = "4"
+    AWS_IAM_PRINCIPALS = "5"
+    MICROSOFT_365_USERS = "6"
+    GOOGLE_WORKSPACE_USERS = "7"
+    AWS_IAM_ROLES = "5.1"
+    AWS_IAM_USERS = "5.2"
+
+
+@dataclass
+class ScanConfig:
+    """Configuration for a scan operation."""
+
+    scan_type: ScanType
+    threads: int = 100
+    wordlist_path: str | None = None
+    aws_profile: str = "default"
+    account_id: str | None = None
+    domain_name: str | None = None
+    email_option: str | None = None
+    email_list_path: str | None = None
+    single_email: str | None = None
+    timeout: int | None = None
+    log_level: str | None = None
+    cleanup: bool = True
+
+
+@dataclass
+class ScanResult:
+    """Results from a scan operation."""
+
+    scan_id: str
+    scan_type: ScanType
+    status: str  # "running", "completed", "failed"
+    valid_principals: list[str]
+    total_scanned: int
+    start_time: datetime
+    end_time: datetime | None = None
+    results_file: str | None = None
+    error: str | None = None
+
+    @property
+    def success_rate(self) -> float:
+        """Calculate success rate as percentage."""
+        if self.total_scanned == 0:
+            return 0.0
+        return (len(self.valid_principals) / self.total_scanned) * 100
+
+    @property
+    def duration_seconds(self) -> float | None:
+        """Calculate scan duration in seconds."""
+        if self.end_time:
+            return (self.end_time - self.start_time).total_seconds()
+        return None

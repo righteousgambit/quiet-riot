@@ -27,7 +27,7 @@ aws-service-role/connect.amazonaws.com/AmazonConnectServiceLinkedRolePolicy
 aws-service-role/continuousexport.discovery.amazonaws.com/AWSServiceRoleForApplicationDiscoveryServiceContinuousExport
 aws-service-role/custom-resource.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_CustomResource
 aws-service-role/dax.amazonaws.com/AWSServiceRoleForDAX
-aws-service-role/delivery.logs.amazonaws.com/AWSServiceRoleForLogDelivery 
+aws-service-role/delivery.logs.amazonaws.com/AWSServiceRoleForLogDelivery
 aws-service-role/devops-guru.amazonaws.com/AmazonDevOpsGuruServiceRolePolicy
 aws-service-role/directconnect.amazonaws.com/AWSServiceRoleForNetworkManager
 aws-service-role/directconnect.amazon.com/AWSServiceRoleForDirectConnect

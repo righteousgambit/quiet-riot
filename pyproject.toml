@@ -1,0 +1,167 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quiet-riot"
+version = "1.0.7"
+description = "Cloud Recon Tool - Enumeration tool for scalable, unauthenticated validation of AWS, Azure, and GCP principals"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Wes Ladd", email = "wesladd@traingrc.com"}
+]
+keywords = ["aws", "cloud", "recon", "enumeration", "security", "pentesting"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Topic :: Security",
+    "Topic :: System :: Networking",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "boto3>=1.17.84",
+    "requests>=2.28.1",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "jinja2>=3.1.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "moto[ecr,sns,s3,sts]>=5.0.0",
+    "types-requests>=2.28.0",
+    "pre-commit>=3.0.0",
+]
+
+[project.scripts]
+quiet-riot = "quiet_riot.cli.main:main"
+quiet-riot-server = "quiet_riot.api.server:main"
+
+[project.urls]
+Homepage = "https://github.com/righteousgambit/quiet-riot"
+Documentation = "https://github.com/righteousgambit/quiet-riot#readme"
+Repository = "https://github.com/righteousgambit/quiet-riot"
+Issues = "https://github.com/righteousgambit/quiet-riot/issues"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["quiet_riot*"]
+exclude = ["tests*", "*.tests*"]
+
+[tool.setuptools.package-data]
+quiet_riot = [
+    "results/*.txt",
+    "wordlists/*.txt",
+    "core/enumeration/*",
+    "api/templates/*",
+    "api/static/*",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "S",   # flake8-bandit (security)
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "S101",  # use of assert (ok in tests)
+    "S603",  # subprocess call (we need this)
+    "S607",  # starting a process with a partial executable path
+    "N999",  # invalid module name (false positive - package name uses hyphen but module uses underscore)
+    "S311",  # pseudo-random generators (intentional for non-crypto use)
+    "S113",  # requests without timeout (handled by bandit, some are intentional)
+    "B904",  # exception chaining (can be verbose, some cases are fine)
+    "S110",  # try-except-pass (some are intentional for cleanup)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**/*.py" = ["S101", "S105", "S106", "S311", "ARG001", "S110"]  # asserts, dummy creds, randomness ok in tests
+"quiet_riot/api/server.py" = ["S104", "E402", "B904", "S110"]  # hardcoded-temp-file, import after path, exception handling, try-except-pass
+"quiet_riot/core/enumeration/**/*.py" = ["F841"]  # unused variables (legacy code); F821 intentionally NOT ignored - undefined names must fail lint
+"quiet_riot/core/scanner.py" = ["F841"]  # unused variables
+"quiet_riot/aws_credentials.py" = ["SIM108", "SIM102"]  # code style preferences
+"quiet_riot/config.py" = ["UP008"]  # super() style preference
+"quiet_riot/core/enumeration/loadbalancer.py" = ["N806", "F841", "SIM102"]  # variable naming, unused vars, nested ifs
+"quiet_riot/core/enumeration/rand_id_generator.py" = ["B007"]  # unused loop variable
+
+[tool.ruff.lint.isort]
+known-first-party = ["quiet_riot"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+ignore_missing_imports = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=quiet_riot --cov-report=html --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["quiet_riot"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]

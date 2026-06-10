@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiet Riot - Cloud Recon Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎸 Quiet Riot</h1>
+            <p>Cloud Recon Tool - Professional Enumeration Dashboard</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="scan">
+                <span>🔍 Scan</span>
+            </button>
+            <button class="tab-button" data-tab="results">
+                <span>📊 Results</span>
+            </button>
+            <button class="tab-button" data-tab="infrastructure">
+                <span>☁️ Infrastructure</span>
+            </button>
+        </div>
+
+        <!-- Tab Content: Scan -->
+        <div class="tab-content active" id="scan-tab">
+            <div class="step-indicator">
+                <div class="step active" id="indicator1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Scan Type</div>
+                </div>
+                <div class="step" id="indicator2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Configuration</div>
+                </div>
+                <div class="step" id="indicator3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Settings</div>
+                </div>
+            </div>
+
+            <div class="wizard" id="wizard">
+                <!-- Step 1: Scan Type Selection -->
+                <div class="step-content active" id="step1">
+                    <h2 style="margin-bottom: 24px; color: #333;">Select Scan Type</h2>
+                    <div class="form-group">
+                        <label for="scanType">Choose the type of enumeration you want to perform:</label>
+                        <select id="scanType" name="scan_type" required>
+                            <option value="">-- Select a scan type --</option>
+                        </select>
+                        <div class="form-help" id="scanTypeDescription"></div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-primary" id="nextBtn1" disabled>Next →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Configuration (Conditional) -->
+                <div class="step-content" id="step2">
+                    <h2 style="margin-bottom: 24px; color: #333;" id="step2Title">Configuration</h2>
+                    <div id="configContent"></div>
+                    <div class="button-group">
+                        <button type="button" class="btn-secondary" id="backBtn2">← Back</button>
+                        <button type="button" class="btn-primary" id="nextBtn2" disabled>Next →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Advanced Settings -->
+                <div class="step-content" id="step3">
+                    <h2 style="margin-bottom: 24px; color: #333;">Advanced Settings</h2>
+                    <div class="form-group">
+                        <label for="threads">Threads</label>
+                        <input type="number" id="threads" name="threads" value="100" min="1" max="1000" required>
+                        <div class="form-help">Number of concurrent threads to use for scanning (1-1000)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="awsProfile">AWS Profile</label>
+                        <input type="text" id="awsProfile" name="aws_profile" value="default" required>
+                        <div class="form-help">AWS profile name to use for authentication</div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-secondary" id="backBtn3">← Back</button>
+                        <button type="button" class="btn-primary" id="startScanBtn">Start Scan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Results -->
+        <div class="tab-content" id="results-tab">
+            <div class="wizard">
+                <h2 style="margin-bottom: 24px; color: #333;">Scan Results</h2>
+                <div id="scanStatus" class="status"></div>
+                <div class="stats" id="scanStats"></div>
+                <div id="resultsEmpty" style="text-align: center; padding: 60px 20px; color: #666;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #333;">No Scan Results Yet</div>
+                    <div>Start a scan from the Scan tab to see results here.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Infrastructure -->
+        <div class="tab-content" id="infrastructure-tab">
+            <div class="wizard">
+                <h2 style="margin-bottom: 24px; color: #333;">AWS Infrastructure</h2>
+                <div id="infrastructureContent">
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        <div class="loading" style="margin: 0 auto 10px;"></div>
+                        Loading infrastructure status...
+                    </div>
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <button type="button" class="btn-secondary" id="refreshInfrastructure" style="padding: 10px 20px; font-size: 14px;">Refresh</button>
+                    <button type="button" class="btn-secondary" id="cleanupInfrastructure" style="padding: 10px 20px; font-size: 14px; margin-left: 10px; background: #dc3545; color: white;">Cleanup All Resources</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load JavaScript modules in dependency order -->
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/ui-state.js"></script>
+    <script src="/static/js/form-validator.js"></script>
+    <script src="/static/js/email-generator.js"></script>
+    <script src="/static/js/scan-config.js"></script>
+    <script src="/static/js/infrastructure.js"></script>
+    <script src="/static/js/scan-manager.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
