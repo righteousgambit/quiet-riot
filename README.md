@@ -34,7 +34,7 @@ pip install -e ".[dev]"
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.11+
 - AWS credentials configured (for AWS scans - still unauthenticated, but resources need to be provisioned)
 - boto3/botocore (installed automatically)
 
@@ -290,9 +290,9 @@ The credentials manager validates sessions and provides clear error messages if 
 
 ### From Legacy `main.py`
 
-The old `main.py` is still present for backward compatibility, but new code should use:
+The old monolithic `main.py` has been **removed**. Use the package entry points instead:
 
-- **CLI**: `quiet_riot.cli.main.main()` or `quiet-riot` command
+- **CLI**: `quiet_riot.cli.main.main()` or the `quiet-riot` command
 - **Core logic**: `quiet_riot.core.scanner.Scanner`
 - **Config**: `quiet_riot.config.get_config()`
 - **Credentials**: `quiet_riot.aws_credentials.get_credentials_manager()`

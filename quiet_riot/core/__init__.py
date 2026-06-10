@@ -1,6 +1,7 @@
 """
 Core business logic for Quiet Riot.
 """
+
 from .enumeration_handlers import EnumerationHandler
 from .models import ScanConfig, ScanResult, ScanType
 from .result_handler import ResultHandler

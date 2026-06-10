@@ -1,9 +1,9 @@
 """
 Wordlist handling for Quiet Riot.
 """
+
 import logging
 from pathlib import Path
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class WordlistHandler:
     """Handles wordlist operations."""
 
-    def __init__(self, base_path: Optional[Path] = None):
+    def __init__(self, base_path: Path | None = None):
         """
         Initialize wordlist handler.
 
@@ -22,7 +22,7 @@ class WordlistHandler:
             base_path = Path(__file__).parent.parent.parent / "wordlists"
         self.base_path = base_path
 
-    def load_wordlist(self, wordlist_path: str) -> List[str]:
+    def load_wordlist(self, wordlist_path: str) -> list[str]:
         """
         Load wordlist from file.
 
@@ -46,7 +46,7 @@ class WordlistHandler:
         logger.info(f"Loaded {len(words)} words from wordlist")
         return words
 
-    def save_wordlist(self, words: List[str], output_path: str) -> Path:
+    def save_wordlist(self, words: list[str], output_path: str) -> Path:
         """
         Save wordlist to file.
 

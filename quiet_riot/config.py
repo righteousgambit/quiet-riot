@@ -3,11 +3,12 @@
 Configuration singleton for Quiet Riot.
 Manages application settings, AWS session state, and logging configuration.
 """
+
 import logging
 import os
 from pathlib import Path
 import sys
-from typing import List, Optional
+from typing import Optional
 
 
 class Config:
@@ -36,16 +37,16 @@ class Config:
     def _reset(self):
         """Reset configuration to defaults."""
         # AWS Configuration
-        self.session: Optional[object] = None
-        self.account_no: Optional[str] = None
-        self.account_arn: Optional[str] = None
+        self.session: object | None = None
+        self.account_no: str | None = None
+        self.account_arn: str | None = None
 
         # Scan Objects - resources created for enumeration
-        self.scan_objects: List[str] = []
+        self.scan_objects: list[str] = []
 
         # Logging Configuration
         self.log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
-        self.log_file: Optional[str] = os.getenv("LOG_FILE", None)
+        self.log_file: str | None = os.getenv("LOG_FILE", None)
         self.log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         self.log_date_format: str = "%Y-%m-%d %H:%M:%S"
 
@@ -157,9 +158,7 @@ class Config:
     def __repr__(self) -> str:
         """String representation of config."""
         return (
-            f"Config(account_no={self.account_no}, "
-            f"scan_objects={len(self.scan_objects)}, "
-            f"log_level={self.log_level})"
+            f"Config(account_no={self.account_no}, scan_objects={len(self.scan_objects)}, log_level={self.log_level})"
         )
 
 

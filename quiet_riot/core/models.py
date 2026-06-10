@@ -1,10 +1,10 @@
 """
 Data models for Quiet Riot.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
 
 
 class ScanType(str, Enum):
@@ -27,15 +27,15 @@ class ScanConfig:
 
     scan_type: ScanType
     threads: int = 100
-    wordlist_path: Optional[str] = None
+    wordlist_path: str | None = None
     aws_profile: str = "default"
-    account_id: Optional[str] = None
-    domain_name: Optional[str] = None
-    email_option: Optional[str] = None
-    email_list_path: Optional[str] = None
-    single_email: Optional[str] = None
-    timeout: Optional[int] = None
-    log_level: Optional[str] = None
+    account_id: str | None = None
+    domain_name: str | None = None
+    email_option: str | None = None
+    email_list_path: str | None = None
+    single_email: str | None = None
+    timeout: int | None = None
+    log_level: str | None = None
     cleanup: bool = True
 
 
@@ -46,12 +46,12 @@ class ScanResult:
     scan_id: str
     scan_type: ScanType
     status: str  # "running", "completed", "failed"
-    valid_principals: List[str]
+    valid_principals: list[str]
     total_scanned: int
     start_time: datetime
-    end_time: Optional[datetime] = None
-    results_file: Optional[str] = None
-    error: Optional[str] = None
+    end_time: datetime | None = None
+    results_file: str | None = None
+    error: str | None = None
 
     @property
     def success_rate(self) -> float:
@@ -61,7 +61,7 @@ class ScanResult:
         return (len(self.valid_principals) / self.total_scanned) * 100
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """Calculate scan duration in seconds."""
         if self.end_time:
             return (self.end_time - self.start_time).total_seconds()

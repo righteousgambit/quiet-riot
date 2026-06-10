@@ -3,8 +3,8 @@
 Resource manager for AWS resources created during scanning.
 Ensures proper cleanup of all created resources.
 """
+
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +20,11 @@ class ResourceManager:
             session: Boto3 session object
         """
         self.session = session
-        self.ecr_public_repo: Optional[str] = None
-        self.ecr_private_repo: Optional[str] = None
-        self.sns_topic_arn: Optional[str] = None
-        self.s3_bucket: Optional[str] = None
-        self.canonical_id: Optional[str] = None
+        self.ecr_public_repo: str | None = None
+        self.ecr_private_repo: str | None = None
+        self.sns_topic_arn: str | None = None
+        self.s3_bucket: str | None = None
+        self.canonical_id: str | None = None
         self.resources_created = False
 
     def create_resources(

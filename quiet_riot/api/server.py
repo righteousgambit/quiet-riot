@@ -6,7 +6,6 @@ FastAPI server for Quiet Riot with dashboard UI.
 from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import boto3
 from fastapi import FastAPI, HTTPException, Request
@@ -22,12 +21,12 @@ from ..core.scanner import Scanner
 logger = logging.getLogger(__name__)
 
 # Global scanner instance
-scanner: Optional[Scanner] = None
-active_scans: Dict[str, ScanResult] = {}
-current_profile: Optional[str] = None
+scanner: Scanner | None = None
+active_scans: dict[str, ScanResult] = {}
+current_profile: str | None = None
 credentials_required: bool = False
 # Track infrastructure resources across all scans
-infrastructure_resources: Dict[str, dict] = {}
+infrastructure_resources: dict[str, dict] = {}
 
 
 @asynccontextmanager
@@ -90,33 +89,33 @@ class ScanRequest(BaseModel):
 
     scan_type: int
     threads: int = 100
-    wordlist_path: Optional[str] = None
-    aws_profile: Optional[str] = None
-    aws_arn: Optional[str] = None
-    account_id: Optional[str] = None
-    domain_name: Optional[str] = None
-    single_email: Optional[str] = None
-    timeout: Optional[int] = None
+    wordlist_path: str | None = None
+    aws_profile: str | None = None
+    aws_arn: str | None = None
+    account_id: str | None = None
+    domain_name: str | None = None
+    single_email: str | None = None
+    timeout: int | None = None
     # Email-based scan options
-    email_list: Optional[List[str]] = None
-    email_domain: Optional[str] = None
-    name_list: Optional[List[str]] = None
+    email_list: list[str] | None = None
+    email_domain: str | None = None
+    name_list: list[str] | None = None
     # IAM-based scan options
-    iam_list: Optional[List[str]] = None
-    use_vendor_principals: Optional[bool] = False
+    iam_list: list[str] | None = None
+    use_vendor_principals: bool | None = False
     # Domain-based scan options
-    domain_list: Optional[List[str]] = None
+    domain_list: list[str] | None = None
     # Account ID scan options
-    account_id_list: Optional[List[str]] = None
-    generate_account_ids: Optional[bool] = False
-    account_id_count: Optional[int] = 1000
+    account_id_list: list[str] | None = None
+    generate_account_ids: bool | None = False
+    account_id_count: int | None = 1000
 
 
 class CredentialsRequest(BaseModel):
     """Request model for setting AWS credentials."""
 
-    profile: Optional[str] = None
-    arn: Optional[str] = None
+    profile: str | None = None
+    arn: str | None = None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -318,8 +317,8 @@ async def start_scan(scan_request: ScanRequest):
                 elif scan_request.account_id_list:
                     wordlist_path = str(temp_dir / "account_ids_custom.txt")
                     with open(wordlist_path, "w") as f:
-                        for account_id in scan_request.account_id_list:
-                            f.write(f"{account_id.strip()}\n")
+                        for aid in scan_request.account_id_list:
+                            f.write(f"{aid.strip()}\n")
 
             elif scan_type in [
                 ScanType.AWS_ROOT_USER_EMAIL,

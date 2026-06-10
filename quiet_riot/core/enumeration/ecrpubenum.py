@@ -4,6 +4,7 @@ import logging
 
 from botocore.exceptions import ClientError
 
+from ... import config as app_config
 from .retry_handler import get_botocore_retry_config, retry_with_backoff
 
 logger = logging.getLogger(__name__)
@@ -47,8 +48,8 @@ def ecr_princ_checker(rand_account_id, session):
 
     try:
         client.set_repository_policy(
-            registryId=app_app_config.get_config().account_no,
-            repositoryName=app_app_config.get_config().scan_objects[0],
+            registryId=app_config.get_config().account_no,
+            repositoryName=app_config.get_config().scan_objects[0],
             policyText=json.dumps(my_managed_policy),
         )
         logger.info(f"Valid principal found: {rand_account_id}")

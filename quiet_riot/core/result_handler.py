@@ -1,10 +1,10 @@
 """
 Result handling for Quiet Riot.
 """
+
 from datetime import datetime
 import logging
 from pathlib import Path
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class ResultHandler:
     """Handles scan result operations."""
 
-    def __init__(self, results_dir: Optional[Path] = None):
+    def __init__(self, results_dir: Path | None = None):
         """
         Initialize result handler.
 
@@ -24,7 +24,7 @@ class ResultHandler:
         self.results_dir = Path(results_dir)
         self.results_dir.mkdir(exist_ok=True)
 
-    def save_results(self, valid_principals: List[str], scan_type: str) -> Path:
+    def save_results(self, valid_principals: list[str], scan_type: str) -> Path:
         """
         Save scan results to file.
 
@@ -46,7 +46,7 @@ class ResultHandler:
 
         return filepath
 
-    def load_results(self, results_file: Path) -> List[str]:
+    def load_results(self, results_file: Path) -> list[str]:
         """
         Load results from file.
 

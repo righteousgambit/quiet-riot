@@ -1,0 +1,207 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Quiet Riot - Main",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": ["--scan", "1", "--threads", "10", "--profile", "default"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Quiet Riot - AWS Account IDs",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": ["--scan", "1", "--threads", "10", "--profile", "default"],
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Quiet Riot - Microsoft 365 Domains",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": ["--scan", "2", "--threads", "10", "--profile", "default"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Quiet Riot - AWS Services Footprinting",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": [
+        "--scan",
+        "3",
+        "--threads",
+        "10",
+        "--wordlist",
+        "${workspaceFolder}/wordlists/service-linked-roles.txt",
+        "--profile",
+        "default"
+      ],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Quiet Riot - AWS Root User Email",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": ["--scan", "4", "--threads", "10", "--profile", "default"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Quiet Riot - AWS IAM Principals",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": [
+        "--scan",
+        "5",
+        "--threads",
+        "10",
+        "--wordlist",
+        "${workspaceFolder}/wordlists/service-linked-roles.txt",
+        "--profile",
+        "default"
+      ],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Quiet Riot - Microsoft 365 Users",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": ["--scan", "6", "--threads", "10", "--profile", "default"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Quiet Riot - Google Workspace Users",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "args": ["--scan", "7", "--threads", "10", "--profile", "default"],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python"
+    },
+    {
+      "name": "Python: Debug Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "args": ["${workspaceFolder}", "-v"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "preLaunchTask": "Setup Virtual Environment"
+    },
+    {
+      "name": "Python: FastAPI Server (Debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "quiet_riot.api.server:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "jinja": true,
+      "preLaunchTask": "Setup Virtual Environment",
+      "serverReadyAction": {
+        "pattern": "Uvicorn running on .+ \\(Press CTRL\\+C to quit\\)",
+        "uriFormat": "http://localhost:8000",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "Python: FastAPI Server (No Reload)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "quiet_riot.api.server:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONIOENCODING": "UTF-8"
+      },
+      "preLaunchTask": "Setup Virtual Environment",
+      "serverReadyAction": {
+        "pattern": "Uvicorn running on .+ \\(Press CTRL\\+C to quit\\)",
+        "uriFormat": "http://localhost:8000",
+        "action": "openExternally"
+      }
+    }
+  ]
+}

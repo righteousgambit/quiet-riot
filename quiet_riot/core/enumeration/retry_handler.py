@@ -3,6 +3,7 @@
 Retry handler for AWS API calls with exponential backoff.
 Handles throttling and transient errors appropriately.
 """
+
 from functools import wraps
 import logging
 import time
@@ -123,7 +124,7 @@ def retry_with_backoff(max_retries=3, base_delay=1.0, max_delay=60.0, exponentia
                     delay += jitter
 
                     logger.debug(
-                        f"Retry attempt {attempt + 1}/{max_retries} for {func.__name__} " f"after {delay:.2f}s: {e}"
+                        f"Retry attempt {attempt + 1}/{max_retries} for {func.__name__} after {delay:.2f}s: {e}"
                     )
                     time.sleep(delay)
 

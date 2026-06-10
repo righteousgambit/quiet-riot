@@ -10,7 +10,6 @@ import configparser
 import logging
 from pathlib import Path
 import re
-from typing import Dict, Optional, Tuple
 
 import boto3
 from botocore.exceptions import ClientError, ProfileNotFound
@@ -44,7 +43,7 @@ class AWSCredentialsManager:
         self.aws_config_path.parent.mkdir(parents=True, exist_ok=True)
         self.aws_credentials_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def parse_arn(self, arn: str) -> Dict[str, str]:
+    def parse_arn(self, arn: str) -> dict[str, str]:
         """
         Parse an AWS ARN into its components.
 
@@ -117,15 +116,12 @@ class AWSCredentialsManager:
                 return True
 
             # Check if default profile (no section needed)
-            if profile_name == "default":
-                return True
-
-            return False
+            return profile_name == "default"
         except Exception as e:
             logger.debug(f"Error checking profile existence: {e}")
             return False
 
-    def get_profile_arn(self, profile_name: str) -> Optional[str]:
+    def get_profile_arn(self, profile_name: str) -> str | None:
         """
         Get the ARN associated with a profile by checking the current identity.
 
@@ -139,7 +135,8 @@ class AWSCredentialsManager:
             session = boto3.Session(profile_name=profile_name)
             sts = session.client("sts")
             identity = sts.get_caller_identity()
-            return identity.get("Arn")
+            arn = identity.get("Arn")
+            return str(arn) if arn else None
         except Exception as e:
             logger.debug(f"Could not get ARN for profile {profile_name}: {e}")
             return None
@@ -200,7 +197,7 @@ class AWSCredentialsManager:
         role_arn: str,
         source_profile: str = "default",
         region: str = "us-east-1",
-        external_id: Optional[str] = None,
+        external_id: str | None = None,
     ) -> bool:
         """
         Create an AWS profile that assumes a role.
@@ -246,7 +243,7 @@ class AWSCredentialsManager:
     def create_profile_from_arn(
         self,
         arn: str,
-        profile_name: Optional[str] = None,
+        profile_name: str | None = None,
         prefer_sso: bool = True,
     ) -> str:
         """
@@ -318,8 +315,8 @@ class AWSCredentialsManager:
         )
 
     def validate_session(
-        self, session: Optional[boto3.Session] = None, profile_name: Optional[str] = None
-    ) -> Tuple[bool, Optional[str]]:
+        self, session: boto3.Session | None = None, profile_name: str | None = None
+    ) -> tuple[bool, str | None]:
         """
         Validate that an AWS session has valid credentials.
 
@@ -353,7 +350,7 @@ class AWSCredentialsManager:
         self,
         profile_or_arn: str,
         prefer_profile: bool = True,
-    ) -> Tuple[boto3.Session, str]:
+    ) -> tuple[boto3.Session, str]:
         """
         Get or create an AWS session from a profile name or ARN.
 
@@ -408,7 +405,7 @@ class AWSCredentialsManager:
 
 
 # Global instance
-_credentials_manager: Optional[AWSCredentialsManager] = None
+_credentials_manager: AWSCredentialsManager | None = None
 
 
 def get_credentials_manager() -> AWSCredentialsManager:

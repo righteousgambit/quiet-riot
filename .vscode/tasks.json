@@ -1,0 +1,109 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup Virtual Environment",
+      "type": "shell",
+      "command": "${workspaceFolder}/.vscode/setup-venv.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pip install -e .",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "dependsOn": "Setup Virtual Environment"
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python -m pytest -v",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      },
+      "dependsOn": "Setup Virtual Environment"
+    },
+    {
+      "label": "Lint Code",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/ruff check .",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      },
+      "dependsOn": "Setup Virtual Environment"
+    },
+    {
+      "label": "Format Code (Ruff)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/ruff format .",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      },
+      "dependsOn": "Setup Virtual Environment"
+    },
+    {
+      "label": "Fix Linting Issues",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/ruff check . --fix",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      },
+      "dependsOn": "Setup Virtual Environment"
+    },
+    {
+      "label": "Type Check",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python -m mypy . --ignore-missing-imports",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      },
+      "dependsOn": "Setup Virtual Environment"
+    },
+    {
+      "label": "Start FastAPI Server",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/uvicorn quiet_riot.api.server:app --host 0.0.0.0 --port 8000 --reload",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false
+      },
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "default"
+      },
+      "dependsOn": "Setup Virtual Environment"
+    },
+    {
+      "label": "Start FastAPI Server (Production)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/uvicorn quiet_riot.api.server:app --host 0.0.0.0 --port 8000",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "isBackground": true,
+      "dependsOn": "Setup Virtual Environment"
+    }
+  ]
+}

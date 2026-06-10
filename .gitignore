@@ -51,7 +51,7 @@ packer_cache/
 wordlist-*.txt
 words-*.txt
 valid_scan_results-*.txt
-results/valid_scan_results-*.txt
+results/*.txt
 wordlists/combined_*.txt
 wordlists/names_quit_riot.txt
 wordlists/final_emails.txt

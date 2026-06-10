@@ -3,6 +3,7 @@ import logging
 
 from botocore.exceptions import ClientError
 
+from ... import config as app_config
 from .retry_handler import get_botocore_retry_config, retry_with_backoff
 
 logger = logging.getLogger(__name__)
@@ -36,10 +37,10 @@ def s3_acl_princ_checker(rand_account_id, session):
                         "Permission": "READ",
                     },
                 ],
-                "Owner": {"ID": app_app_config.get_config().scan_objects[4]},
+                "Owner": {"ID": app_config.get_config().scan_objects[4]},
             },
-            Bucket=app_app_config.get_config().scan_objects[3],
-            ExpectedBucketOwner=app_app_config.get_config().account_no,
+            Bucket=app_config.get_config().scan_objects[3],
+            ExpectedBucketOwner=app_config.get_config().account_no,
         )
         logger.info(f"Valid root account email found: {rand_account_id}")
         return "Pass"

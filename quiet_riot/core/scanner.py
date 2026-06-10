@@ -7,7 +7,6 @@ import logging
 import os
 from pathlib import Path
 import time
-from typing import Optional, Tuple
 import uuid
 
 import boto3
@@ -86,7 +85,7 @@ class Scanner:
         logger.info("AWS resources created successfully")
         return ecr_public_repo, ecr_private_repo, sns_topic, s3_bucket, canonical_id
 
-    def _prepare_wordlist(self, scan_config: ScanConfig) -> Tuple[Optional[str], Optional[str]]:
+    def _prepare_wordlist(self, scan_config: ScanConfig) -> tuple[str | None, str | None]:
         """
         Prepare wordlist for scanning based on scan type.
 
@@ -118,7 +117,11 @@ class Scanner:
                 raise FileNotFoundError(f"Wordlist not found: {wordlist_path}")
             return str(wordlist_path), scan_config.account_id
 
-        elif scan_config.scan_type in [ScanType.AWS_IAM_ROLES, ScanType.AWS_IAM_USERS]:
+        elif scan_config.scan_type in [
+            ScanType.AWS_IAM_PRINCIPALS,
+            ScanType.AWS_IAM_ROLES,
+            ScanType.AWS_IAM_USERS,
+        ]:
             if not scan_config.wordlist_path:
                 raise ValueError("Wordlist path required for IAM principal scans")
             if not scan_config.account_id:
@@ -185,11 +188,13 @@ class Scanner:
                 self._setup_resources()
 
             # Execute scan based on type
-            valid_principals = []
+            valid_principals: list[str] = []
             total_scanned = 0
 
             if scan_config.scan_type == ScanType.AWS_ACCOUNT_IDS:
                 wordlist_path, _ = self._prepare_wordlist(scan_config)
+                if not wordlist_path:
+                    raise ValueError("Wordlist path is required for AWS Account ID scan")
                 valid_principals, total_scanned = self.enumeration_handler.scan_aws_account_ids(
                     wordlist_path, scan_config.threads
                 )
@@ -223,6 +228,22 @@ class Scanner:
                 valid_principals, total_scanned = self.enumeration_handler.scan_aws_iam_users(
                     wordlist_path, account_id, scan_config.threads
                 )
+
+            elif scan_config.scan_type == ScanType.AWS_IAM_PRINCIPALS:
+                # "IAM Principals" enumerates both roles and users from the wordlist.
+                wordlist_path, account_id = self._prepare_wordlist(scan_config)
+                if not account_id:
+                    raise ValueError("Account ID is required for AWS IAM Principals scan")
+                if not wordlist_path:
+                    raise ValueError("Wordlist path is required for AWS IAM Principals scan")
+                role_principals, role_count = self.enumeration_handler.scan_aws_iam_roles(
+                    wordlist_path, account_id, scan_config.threads
+                )
+                user_principals, user_count = self.enumeration_handler.scan_aws_iam_users(
+                    wordlist_path, account_id, scan_config.threads
+                )
+                valid_principals = role_principals + user_principals
+                total_scanned = role_count + user_count
 
             elif scan_config.scan_type == ScanType.MICROSOFT_365_DOMAINS:
                 if not scan_config.domain_name:

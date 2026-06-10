@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import time
-from typing import List, Optional, Tuple
 
 import requests
 
@@ -28,7 +27,7 @@ class EnumerationHandler:
         self.session = session
         self.ms_url = "https://login.microsoftonline.com/common/GetCredentialType"
 
-    def scan_aws_account_ids(self, wordlist_path: str, threads: int) -> Tuple[List[str], int]:
+    def scan_aws_account_ids(self, wordlist_path: str, threads: int) -> tuple[list[str], int]:
         """
         Scan for AWS Account IDs.
 
@@ -53,7 +52,7 @@ class EnumerationHandler:
         total_scanned = self._count_wordlist_items(wordlist_path)
         return valid_accounts, total_scanned
 
-    def scan_aws_iam_roles(self, wordlist_path: str, account_id: str, threads: int) -> Tuple[List[str], int]:
+    def scan_aws_iam_roles(self, wordlist_path: str, account_id: str, threads: int) -> tuple[list[str], int]:
         """
         Scan for AWS IAM Roles.
 
@@ -96,7 +95,7 @@ class EnumerationHandler:
             if os.path.exists(temp_wordlist):
                 os.remove(temp_wordlist)
 
-    def scan_aws_iam_users(self, wordlist_path: str, account_id: str, threads: int) -> Tuple[List[str], int]:
+    def scan_aws_iam_users(self, wordlist_path: str, account_id: str, threads: int) -> tuple[list[str], int]:
         """
         Scan for AWS IAM Users.
 
@@ -139,7 +138,7 @@ class EnumerationHandler:
             if os.path.exists(temp_wordlist):
                 os.remove(temp_wordlist)
 
-    def scan_aws_services_footprint(self, wordlist_path: str, account_id: str, threads: int) -> Tuple[List[str], int]:
+    def scan_aws_services_footprint(self, wordlist_path: str, account_id: str, threads: int) -> tuple[list[str], int]:
         """
         Scan for AWS Services Footprinting.
 
@@ -155,7 +154,7 @@ class EnumerationHandler:
         # Same as IAM roles scan
         return self.scan_aws_iam_roles(wordlist_path, account_id, threads)
 
-    def scan_microsoft_365_domain(self, domain_name: str) -> Tuple[List[str], int]:
+    def scan_microsoft_365_domain(self, domain_name: str) -> tuple[list[str], int]:
         """
         Check if Microsoft 365 domain exists.
 
@@ -190,7 +189,7 @@ class EnumerationHandler:
             logger.error(f"Error checking domain {domain_name}: {e}")
             return [], 1
 
-    def scan_aws_root_email(self, email: str) -> Tuple[List[str], int]:
+    def scan_aws_root_email(self, email: str) -> tuple[list[str], int]:
         """
         Scan for AWS root account email.
 
@@ -207,7 +206,7 @@ class EnumerationHandler:
             return [email], 1
         return [], 1
 
-    def scan_microsoft_365_user(self, email: str, timeout: Optional[int] = None) -> Tuple[List[str], int]:
+    def scan_microsoft_365_user(self, email: str, timeout: int | None = None) -> tuple[list[str], int]:
         """
         Scan for Microsoft 365 user email.
 
@@ -257,7 +256,7 @@ class EnumerationHandler:
             logger.error(f"Error checking Microsoft 365 user {email}: {e}")
             return [], 1
 
-    def scan_google_workspace_user(self, email: str) -> Tuple[List[str], int]:
+    def scan_google_workspace_user(self, email: str) -> tuple[list[str], int]:
         """
         Scan for Google Workspace user email.
 
