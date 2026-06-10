@@ -6,6 +6,7 @@ Handles throttling and transient errors appropriately.
 
 from functools import wraps
 import logging
+import os
 import time
 
 from botocore.config import Config
@@ -74,10 +75,14 @@ def get_botocore_retry_config(max_attempts=7):
         Config: Botocore configuration object
     """
     return Config(
+        # Bound each call so a stalled socket fails fast instead of hanging on the
+        # 60s botocore default (which, multiplied by retries, can stall for minutes).
+        connect_timeout=int(os.getenv("QUIET_RIOT_AWS_CONNECT_TIMEOUT", "10")),
+        read_timeout=int(os.getenv("QUIET_RIOT_AWS_READ_TIMEOUT", "30")),
         retries={
             "max_attempts": max_attempts,
             "mode": "adaptive",  # Adaptive retry mode handles throttling better
-        }
+        },
     )
 
 
