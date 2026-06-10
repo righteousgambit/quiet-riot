@@ -4,6 +4,8 @@ Uses Starlette's TestClient (no real AWS; the global scanner is mocked).
 """
 
 from datetime import datetime
+import threading
+import time
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -58,24 +60,53 @@ def test_auth_disabled_by_default(client, monkeypatch):
     assert client.get("/api/scans").status_code == 200
 
 
-def test_start_scan_returns_202_running_immediately(client, monkeypatch):
+def test_start_scan_is_nonblocking_and_reaches_completed(client, monkeypatch):
+    """Prove the scan runs off the event loop: POST returns 202 *while the scan is
+    still blocked*, /health stays responsive, and the job later reaches completed."""
     monkeypatch.setattr(server, "API_TOKEN", None)
     monkeypatch.setattr(server, "credentials_required", False)
-    fake = mock.Mock()
-    fake.run_scan.return_value = ScanResult(
-        scan_id="internal",
-        scan_type=ScanType.MICROSOFT_365_DOMAINS,
-        status="completed",
-        valid_principals=[],
-        total_scanned=1,
-        start_time=datetime.now(),
-        end_time=datetime.now(),
-    )
-    fake.resource_mgr.resources_created = False
-    monkeypatch.setattr(server, "scanner", fake)
+    monkeypatch.setattr(server, "scanner", mock.Mock())  # provides effective_session
+
+    started = threading.Event()
+    release = threading.Event()
+
+    def blocking_run(scan_config, cleanup=False):
+        started.set()
+        if not release.wait(timeout=10):
+            raise AssertionError("scan was never released")
+        return ScanResult(
+            scan_id="internal",
+            scan_type=ScanType.MICROSOFT_365_DOMAINS,
+            status="completed",
+            valid_principals=[],
+            total_scanned=1,
+            start_time=datetime.now(),
+            end_time=datetime.now(),
+        )
+
+    fake_scanner = mock.Mock()
+    fake_scanner.run_scan.side_effect = blocking_run
+    fake_scanner.resource_mgr.resources_created = False
+    # Scanner is constructed inside _execute; patch the class to our fake.
+    monkeypatch.setattr(server, "Scanner", lambda session: fake_scanner)
 
     r = client.post("/api/scans", json={"scan_type": 2, "domain_name": "example.com"})
     assert r.status_code == 202
-    body = r.json()
-    assert body["status"] == "running"
-    assert "scan_id" in body
+    job = r.json()["scan_id"]
+    assert r.json()["status"] == "running"
+
+    # The scan actually began in a worker thread...
+    assert started.wait(timeout=5), "background scan never started"
+    # ...and the server is NOT blocked while it runs.
+    assert client.get("/health").status_code == 200
+    assert client.get(f"/api/scans/{job}").json()["status"] == "running"
+
+    # Let the scan finish and confirm the lifecycle write-back to "completed".
+    release.set()
+    final = "running"
+    for _ in range(50):
+        final = client.get(f"/api/scans/{job}").json()["status"]
+        if final == "completed":
+            break
+        time.sleep(0.1)
+    assert final == "completed"

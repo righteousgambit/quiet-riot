@@ -43,9 +43,9 @@ class ResourceManager:
         """
         self.ecr_public_repo = ecr_public_repo
         self.ecr_private_repo = ecr_private_repo
-        self.sns_topic_arn = (
-            f"arn:aws:sns:us-east-1:{self.session.client('sts').get_caller_identity()['Account']}:{sns_topic}"
-        )
+        region = self.session.region_name or "us-east-1"
+        account = self.session.client("sts").get_caller_identity()["Account"]
+        self.sns_topic_arn = f"arn:aws:sns:{region}:{account}:{sns_topic}"
         self.s3_bucket = s3_bucket
         self.canonical_id = canonical_id
         self.resources_created = True

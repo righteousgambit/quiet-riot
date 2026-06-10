@@ -157,7 +157,7 @@ curl http://localhost:8000/api/credentials
 4. **AWS Root User Email** - Enumerate AWS root user email addresses
 5. **AWS IAM Principals** - Enumerate IAM roles/users
 6. **Microsoft 365 Users** - Enumerate M365 user emails
-7. **Google Workspace Users** - Enumerate Google Workspace emails
+7. **Google Workspace Users** - _Deprecated._ Google disabled the `gxlu` endpoint this relied on (it now returns HTTP 204 for every address), so this scan reports no users. Kept for compatibility; logs a warning when run.
 
 ## 📁 Project Structure
 

@@ -36,12 +36,13 @@ def test_distributed_backend_is_clear_about_being_unimplemented():
         DistributedBackend().run("wl.txt", session=None, threads=1)
 
 
-def test_local_backend_delegates_and_reads_results(monkeypatch, tmp_path):
-    results = tmp_path / "valid.txt"
-    results.write_text("123456789012\n210987654321\n")
-
+def test_local_backend_delegates_to_threader(monkeypatch):
     monkeypatch.setattr(backends.loadbalancer, "getter", lambda thread, wordlist: [["a"]])
-    monkeypatch.setattr(backends.loadbalancer, "threader", lambda words, session: str(results))
+    monkeypatch.setattr(
+        backends.loadbalancer,
+        "threader",
+        lambda words, session: ["123456789012", "210987654321"],
+    )
 
     out = LocalThreadPoolBackend().run("wl.txt", session=object(), threads=10)
     assert out == ["123456789012", "210987654321"]

@@ -4,14 +4,13 @@ import datetime
 import glob
 import logging
 import os
+from pathlib import Path
 import random as rand
-import time
+import uuid
 
 from . import ecrprivenum, ecrpubenum, snsenum
 
 logger = logging.getLogger(__name__)
-
-timestamp = time.strftime("%Y%m%d-%H%M%S")
 
 
 # Function to get a wordlist and ask how many threads, then split the wordlist into sub-wordlists of the appropriate size to generate the number of threads desired (approx) when passed to the threader function
@@ -81,7 +80,7 @@ def balancedchecker(wordlist_chunk, session):
 
 
 # Function to create threads and execute parallel scanning
-def threader(words, session):
+def threader(words, session) -> list[str]:
     """
     Execute parallel scanning using ThreadPoolExecutor for proper thread management.
 
@@ -90,7 +89,7 @@ def threader(words, session):
         session: Boto3 session object
 
     Returns:
-        Path to results file
+        List of validated principals found in this scan.
     """
     logger.info("Identified Valid Principals:")
     ct1 = datetime.datetime.now()
@@ -101,7 +100,7 @@ def threader(words, session):
     total_items = len(length_check)
 
     # Collect all valid results
-    all_valid_results = []
+    all_valid_results: list[str] = []
     threads_used = len(words)
 
     # Use ThreadPoolExecutor for proper thread management and cleanup
@@ -123,9 +122,14 @@ def threader(words, session):
                 logger.error(f"Error processing chunk: {e}")
                 continue
 
-    # Write results to file
-    results_file = f"valid_scan_results-{timestamp}.txt"
-    with open(results_file, "a+") as file:
+    # Write results to a UNIQUE per-scan file (results/ is created by config).
+    # A unique name (not a module-level timestamp) prevents results from one scan
+    # appending into another scan's file, which double-counted IAM-principal hits
+    # and bled results across scans in the long-lived API server.
+    results_dir = Path("results")
+    results_dir.mkdir(exist_ok=True)
+    results_file = results_dir / f"valid_scan_results-{uuid.uuid4().hex}.txt"
+    with open(results_file, "w") as file:
         for principal in all_valid_results:
             file.write(str(principal) + "\n")
 
@@ -152,4 +156,4 @@ def threader(words, session):
         except Exception as f:
             logger.warning(f"Error while deleting file {filePath_two}: {f}")
 
-    return results_file
+    return all_valid_results

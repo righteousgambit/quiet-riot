@@ -77,7 +77,8 @@ class Scanner:
         # Add to config
         self.cfg.add_scan_object(ecr_public_repo)
         self.cfg.add_scan_object(ecr_private_repo)
-        sns_topic_arn = f"arn:aws:sns:us-east-1:{self.cfg.account_no}:{sns_topic}"
+        region = self.session.region_name or "us-east-1"
+        sns_topic_arn = f"arn:aws:sns:{region}:{self.cfg.account_no}:{sns_topic}"
         self.cfg.add_scan_object(sns_topic_arn)
         self.cfg.add_scan_object(s3_bucket)
         self.cfg.add_scan_object(canonical_id)
@@ -174,13 +175,16 @@ class Scanner:
 
         logger.info(f"Starting scan {scan_id} of type {scan_config.scan_type}")
 
-        # Setup resources (only for AWS scans that need them)
+        # Setup resources (only for AWS scans that need them). AWS_ROOT_USER_EMAIL
+        # uses the S3-ACL technique, which reads the created bucket + canonical id
+        # from scan_objects[3]/[4] — so it MUST provision resources too.
         needs_resources = scan_config.scan_type in [
             ScanType.AWS_ACCOUNT_IDS,
             ScanType.AWS_SERVICES_FOOTPRINTING,
             ScanType.AWS_IAM_PRINCIPALS,
             ScanType.AWS_IAM_ROLES,
             ScanType.AWS_IAM_USERS,
+            ScanType.AWS_ROOT_USER_EMAIL,
         ]
 
         try:

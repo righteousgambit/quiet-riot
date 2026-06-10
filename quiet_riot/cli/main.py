@@ -42,7 +42,7 @@ Examples:
   4. AWS Root User E-mail Address
   5. AWS IAM Principals
   6. Microsoft 365 Users (e-mails)
-  7. Google Workspace Users (e-mails)
+  7. Google Workspace Users (e-mails) [DEPRECATED - gxlu disabled by Google]
         """,
     )
 

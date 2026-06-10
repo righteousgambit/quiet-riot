@@ -78,3 +78,17 @@ def test_cleanup_called_for_resource_scans(scanner, wordlist):
     cfg = ScanConfig(scan_type=ScanType.AWS_ACCOUNT_IDS, wordlist_path=wordlist)
     scanner.run_scan(cfg, cleanup=True)
     scanner.resource_mgr.cleanup_all.assert_called_once()
+
+
+def test_root_email_scan_provisions_resources(scanner):
+    """Regression: AWS_ROOT_USER_EMAIL must provision resources.
+
+    It uses the S3-ACL technique, which reads the created bucket/canonical id from
+    scan_objects[3]/[4]. It was missing from needs_resources, so _setup_resources
+    never ran and the scan IndexError'd before any AWS call.
+    """
+    scanner.enumeration_handler.scan_aws_root_email.return_value = ([], 1)
+    cfg = ScanConfig(scan_type=ScanType.AWS_ROOT_USER_EMAIL, single_email="nope@example.invalid")
+    result = scanner.run_scan(cfg, cleanup=False)
+    assert result.status == "completed", result.error
+    scanner._setup_resources.assert_called_once()
