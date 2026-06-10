@@ -43,8 +43,10 @@ def test_live_m365_user_invalid_does_not_crash(handler):
     assert isinstance(valid, list)
 
 
-def test_live_google_workspace_runs(handler):
-    """The Google gxlu probe should execute and return a list without raising."""
+def test_live_google_workspace_gxlu_is_deprecated(handler):
+    """Google disabled the gxlu oracle (verified: HTTP 204, no cookies, for a known
+    real Workspace account AND a fake one), so this scan can no longer detect
+    anyone. Assert the known-dead state instead of pretending it works."""
     valid, checked = handler.scan_google_workspace_user("not-a-real-user@example.invalid")
     assert checked == 1
-    assert isinstance(valid, list)
+    assert valid == []

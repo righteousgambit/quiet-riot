@@ -208,9 +208,10 @@ async def get_scan_types():
             {
                 "id": 7,
                 "name": "Google Workspace Users",
-                "description": "Enumerate Google Workspace user emails",
+                "description": "DEPRECATED - Google disabled the gxlu endpoint this relies on; reports no users.",
                 "requires_config": True,
                 "email_based": True,
+                "deprecated": True,
             },
         ]
     }

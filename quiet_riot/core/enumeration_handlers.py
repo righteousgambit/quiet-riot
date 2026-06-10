@@ -263,6 +263,19 @@ class EnumerationHandler:
             response = requests.get("https://mail.google.com/mail/gxlu", params=params, timeout=HTTP_TIMEOUT)  # nosec B113
             response_cookies = response.cookies
 
+            # Google DISABLED the gxlu email-existence oracle: it now returns
+            # 204 No Content with no cookies for every address, real or fake
+            # (verified against a known-valid Workspace account). Surface that
+            # clearly instead of silently reporting a (false) negative.
+            if response.status_code == 204 or len(response_cookies) == 0:
+                logger.warning(
+                    "Google Workspace enumeration via the gxlu endpoint is no longer "
+                    "supported by Google (HTTP %s, no cookies) - results are unreliable "
+                    "and will report no valid users. See scan type 7 (deprecated).",
+                    response.status_code,
+                )
+                return [], 1
+
             if len(response_cookies) == 1:
                 logger.info(f"Valid Google Workspace user found: {email}")
                 return [email], 1
