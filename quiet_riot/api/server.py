@@ -3,12 +3,17 @@
 FastAPI server for Quiet Riot with dashboard UI.
 """
 
+import asyncio
 from contextlib import asynccontextmanager
+from datetime import datetime
 import logging
+import os
 from pathlib import Path
+import secrets
+import uuid
 
 import boto3
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -28,6 +33,24 @@ credentials_required: bool = False
 # Track infrastructure resources across all scans
 infrastructure_resources: dict[str, dict] = {}
 
+# Optional bearer-token auth: if QUIET_RIOT_API_TOKEN is set, sensitive
+# endpoints require "Authorization: Bearer <token>". If unset, auth is disabled
+# (warned at startup) and the server should be bound to localhost only.
+API_TOKEN = os.getenv("QUIET_RIOT_API_TOKEN")
+# Hard cap on emails returned by /api/generate-emails to prevent OOM.
+MAX_EMAIL_RESPONSE = int(os.getenv("QUIET_RIOT_MAX_EMAILS", "50000"))
+# Hold references to fire-and-forget scan tasks so they aren't garbage-collected.
+_scan_tasks: set[asyncio.Task] = set()
+
+
+def require_token(authorization: str | None = Header(default=None)) -> None:
+    """Gate sensitive endpoints behind a bearer token when one is configured."""
+    if not API_TOKEN:
+        return
+    expected = f"Bearer {API_TOKEN}"
+    if not authorization or not secrets.compare_digest(authorization, expected):
+        raise HTTPException(status_code=401, detail="Missing or invalid API token")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,6 +58,12 @@ async def lifespan(app: FastAPI):
     global scanner, credentials_required, current_profile
     # Startup
     logger.info("Initializing Quiet Riot API server...")
+
+    if not API_TOKEN:
+        logger.warning(
+            "QUIET_RIOT_API_TOKEN is not set - API authentication is DISABLED. "
+            "Keep the server bound to localhost (default) or set a token before exposing it."
+        )
 
     credentials_mgr = get_credentials_manager()
 
@@ -183,7 +212,7 @@ async def get_scan_types():
     }
 
 
-@app.post("/api/credentials")
+@app.post("/api/credentials", dependencies=[Depends(require_token)])
 async def set_credentials(credentials_request: CredentialsRequest):
     """Set AWS credentials for the API server."""
     global scanner, current_profile, credentials_required
@@ -228,7 +257,7 @@ async def set_credentials(credentials_request: CredentialsRequest):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@app.get("/api/credentials")
+@app.get("/api/credentials", dependencies=[Depends(require_token)])
 async def get_credentials_status():
     """Get current AWS credentials status."""
     global scanner, current_profile, credentials_required
@@ -251,7 +280,7 @@ async def get_credentials_status():
     }
 
 
-@app.post("/api/scans")
+@app.post("/api/scans", status_code=202, dependencies=[Depends(require_token)])
 async def start_scan(scan_request: ScanRequest):
     """Start a new scan."""
     global scanner, current_profile
@@ -379,31 +408,50 @@ async def start_scan(scan_request: ScanRequest):
             timeout=scan_request.timeout if hasattr(scan_request, "timeout") else None,
         )
 
-        # Run scan (synchronous for now - can be made async later)
-        # In production, this should run in a background task
-        # Don't cleanup immediately - let user manage cleanup via UI
-        result = scan_scanner.run_scan(scan_config, cleanup=False)
-        active_scans[result.scan_id] = result
+        # Run the (blocking, multi-threaded) scan off the event loop in a worker
+        # thread so the server stays responsive. Return a job id immediately and
+        # let the client poll GET /api/scans/{scan_id}.
+        job_id = str(uuid.uuid4())
+        active_scans[job_id] = ScanResult(
+            scan_id=job_id,
+            scan_type=scan_type,
+            status="running",
+            valid_principals=[],
+            total_scanned=0,
+            start_time=datetime.now(),
+        )
 
-        # Track infrastructure resources created for this scan
-        if scan_scanner.resource_mgr.resources_created:
-            infrastructure_resources[result.scan_id] = {
-                "ecr_public_repo": scan_scanner.resource_mgr.ecr_public_repo,
-                "ecr_private_repo": scan_scanner.resource_mgr.ecr_private_repo,
-                "sns_topic_arn": scan_scanner.resource_mgr.sns_topic_arn,
-                "s3_bucket": scan_scanner.resource_mgr.s3_bucket,
-                "canonical_id": scan_scanner.resource_mgr.canonical_id,
-                "scan_id": result.scan_id,
-                "scan_type": result.scan_type.value,
-                "created_at": result.start_time.isoformat(),
-            }
+        async def _execute() -> None:
+            try:
+                result = await asyncio.to_thread(scan_scanner.run_scan, scan_config, False)
+                result.scan_id = job_id
+                active_scans[job_id] = result
+                if scan_scanner.resource_mgr.resources_created:
+                    infrastructure_resources[job_id] = {
+                        "ecr_public_repo": scan_scanner.resource_mgr.ecr_public_repo,
+                        "ecr_private_repo": scan_scanner.resource_mgr.ecr_private_repo,
+                        "sns_topic_arn": scan_scanner.resource_mgr.sns_topic_arn,
+                        "s3_bucket": scan_scanner.resource_mgr.s3_bucket,
+                        "canonical_id": scan_scanner.resource_mgr.canonical_id,
+                        "scan_id": job_id,
+                        "scan_type": result.scan_type.value,
+                        "created_at": result.start_time.isoformat(),
+                    }
+            except Exception as exc:
+                logger.exception(f"Scan {job_id} failed: {exc}")
+                failed = active_scans[job_id]
+                failed.status = "failed"
+                failed.error = str(exc)
+                failed.end_time = datetime.now()
+
+        task = asyncio.create_task(_execute())
+        _scan_tasks.add(task)
+        task.add_done_callback(_scan_tasks.discard)
 
         return {
-            "scan_id": result.scan_id,
-            "status": result.status,
-            "message": ("Scan completed successfully" if result.status == "completed" else "Scan failed"),
-            "valid_principals_count": len(result.valid_principals),
-            "total_scanned": result.total_scanned,
+            "scan_id": job_id,
+            "status": "running",
+            "message": "Scan started; poll GET /api/scans/{scan_id} for status.",
         }
     except ValueError as e:
         logger.warning(f"Invalid scan request: {e}")
@@ -413,7 +461,7 @@ async def start_scan(scan_request: ScanRequest):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@app.get("/api/scans/{scan_id}")
+@app.get("/api/scans/{scan_id}", dependencies=[Depends(require_token)])
 async def get_scan_status(scan_id: str):
     """Get status of a scan."""
     if scan_id not in active_scans:
@@ -434,7 +482,7 @@ async def get_scan_status(scan_id: str):
     }
 
 
-@app.get("/api/scans")
+@app.get("/api/scans", dependencies=[Depends(require_token)])
 async def list_scans():
     """List all scans."""
     return {
@@ -450,7 +498,7 @@ async def list_scans():
     }
 
 
-@app.get("/api/generate-emails")
+@app.get("/api/generate-emails", dependencies=[Depends(require_token)])
 async def generate_emails(
     domain: str,
     pattern: str,
@@ -467,8 +515,8 @@ async def generate_emails(
     Returns:
         List of generated email addresses
     """
-    # Limit max emails to 20 million
-    max_emails = min(max_emails, 20_000_000)
+    # Cap the response so we never build/return a multi-million-item list (OOM).
+    max_emails = max(0, min(max_emails, MAX_EMAIL_RESPONSE))
 
     # Wordlists are in the project root
     # Path: quiet_riot/api/server.py -> quiet_riot/ -> project root
@@ -545,7 +593,7 @@ async def generate_emails(
     }
 
 
-@app.get("/api/infrastructure")
+@app.get("/api/infrastructure", dependencies=[Depends(require_token)])
 async def get_infrastructure():
     """Get current AWS infrastructure resources."""
     global scanner, infrastructure_resources
@@ -678,7 +726,7 @@ async def get_infrastructure():
     }
 
 
-@app.post("/api/infrastructure/cleanup")
+@app.post("/api/infrastructure/cleanup", dependencies=[Depends(require_token)])
 async def cleanup_infrastructure():
     """Clean up all AWS infrastructure resources."""
     global scanner, infrastructure_resources
@@ -799,8 +847,13 @@ def main():
     import uvicorn
 
     cfg = config.get_config()
-    logger.info("Starting Quiet Riot FastAPI server...")
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level=cfg.log_level.lower())  # nosec B104
+    # Default to localhost. Set QUIET_RIOT_HOST=0.0.0.0 to expose the server, but
+    # only do so behind QUIET_RIOT_API_TOKEN (this is an unauthenticated-recon
+    # tool that provisions AWS resources).
+    host = os.getenv("QUIET_RIOT_HOST", "127.0.0.1")
+    port = int(os.getenv("QUIET_RIOT_PORT", "8000"))
+    logger.info(f"Starting Quiet Riot FastAPI server on {host}:{port}...")
+    uvicorn.run(app, host=host, port=port, log_level=cfg.log_level.lower())
 
 
 if __name__ == "__main__":
