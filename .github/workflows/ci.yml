@@ -82,4 +82,9 @@ jobs:
       - name: Verify AWS identity
         run: aws sts get-caller-identity
       - name: Live integration tests (real ECR/SNS/S3 + M365/Google)
+        env:
+          # Known-real accounts for the SaaS detection canaries (masked in logs).
+          QR_TEST_M365_EMAIL: ${{ secrets.QR_TEST_M365_EMAIL }}
+          QR_TEST_M365_DOMAIN: ${{ secrets.QR_TEST_M365_DOMAIN }}
+          QR_TEST_GOOGLE_EMAIL: ${{ secrets.QR_TEST_GOOGLE_EMAIL }}
         run: pytest tests/live --run-live
