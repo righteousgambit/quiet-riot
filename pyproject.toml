@@ -41,7 +41,7 @@ dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.21.0",
-    "ruff>=0.1.0",
+    "ruff==0.15.16",  # pinned so CI format/lint == local + pre-commit (no drift)
     "mypy>=1.5.0",
     "moto[ecr,sns,s3,sts]>=5.0.0",
     "types-requests>=2.28.0",
